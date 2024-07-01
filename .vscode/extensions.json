@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "Prisma.prisma",
+    "bradlc.vscode-tailwindcss",
+    "wayou.vscode-todo-highlight",
+    "redhat.vscode-yaml",
+    "joshbolduc.commitlint",
+    "github.vscode-github-actions",
+    "ffrankreiter.answer-set-programming-language-support",
+    "ms-python.autopep8",
+    "ms-python.flake8"
+  ]
+}

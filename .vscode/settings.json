@@ -1,0 +1,24 @@
+{
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll.tslint": "explicit"
+  },
+
+  "python.analysis.typeCheckingMode": "basic",
+
+  "protoc": {
+    "options": ["--proto_path=protos", "--proto_path=${workspaceRoot}/proto"]
+  },
+
+  "typescript.suggest.autoImports": true,
+  "typescript.validate.enable": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.disableAutomaticTypeAcquisition": true,
+
+  "javascript.suggest.autoImports": true,
+  "javascript.validate.enable": true,
+  "javascript.updateImportsOnFileMove.enabled": "always"
+}
