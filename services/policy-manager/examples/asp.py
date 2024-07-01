@@ -7,43 +7,17 @@ from policy_manager.entities import Data, Hop, Path
 def main():
     asp = AspManager()
 
-    # I do not want my traffic to be routed through any AS that has a
-    # sustainability index less than a certain X.
-    asp.create_policy('''
-#const min_sustainability_index = 10.
+    p1, p2, p3 = "", "", ""
+    with open("./policies/min-sustainability-index.lp", "r") as file_p1, \
+            open("./policies/min-renewable-location.lp", "r") as file_p2, \
+            open("./policies/aggregate-energy-consumption.lp", "r") as file_p3:
+        p1 = file_p1.read()
+        p2 = file_p2.read()
+        p3 = file_p3.read()
 
-:- Idx<min_sustainability_index,
-    sustainability_index(Data, Idx),
-    latest_data(_, Data).
-    ''')
-
-    asp.create_policy('''
-#const min_renewable_energy_percentage = "0.5".
-
-invalid_renewable_energy(Hop) :- Perc<min_renewable_energy_percentage,
-    renewable_energy_percentage(Data, Perc),
-    latest_data(Hop, Data).
-
-:- invalid_renewable_energy(Hop), location(Hop, "italy").
-:- invalid_renewable_energy(Hop), location(Hop, "greece").
-:- invalid_renewable_energy(Hop), location(Hop, "spain").
-''')
-
-    # The aggregated sum across the path for energy_consumption_per_hour
-    # cannot be higher than a certain X.
-    asp.create_policy('''
-#const max_sum_energy_consumption_per_hour = 1500.
-
-sum_energy_consumption_per_hour(Path, Sum) :-
-    path(Path),
-    Sum = #sum { Value : energy_consumption_per_hour(Data, Value),
-                latest_data(Hop, Data),
-                contains(Path, Hop) }.
-
-:- Value>max_sum_energy_consumption_per_hour,
-    sum_energy_consumption_per_hour(Path, Value),
-    path(Path).
-    ''')
+    asp.create_policy(p1)
+    asp.create_policy(p2)
+    asp.create_policy(p3)
 
     d1h1 = Data(data_collected_date=datetime(2024, 5, 1),
                 sustainability_index=20,
