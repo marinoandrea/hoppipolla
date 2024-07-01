@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "policy-manager"
+version = "0.1.0"
+description = ""
+authors = ["Andrea Marino <am.marinoandrea@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+grpc-stubs = "^1.53.0.5"
+sqlalchemy = "^2.0.31"
+clingo = "^5.7.1"
+cachetools = "^5.3.3"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.10.1"
+flake8 = "^7.1.0"
+autopep8 = "^2.3.1"
+grpcio-tools = "^1.64.1"
+mypy-protobuf = "^3.6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
