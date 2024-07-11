@@ -1,6 +1,4 @@
-import pickle
 from abc import ABCMeta
-from pathlib import Path
 from typing import Generic, Literal, Optional, TypeVar, cast
 
 from policy_manager.domain.entities import (Entity, Identifier, Issuer,
@@ -22,20 +20,11 @@ class InMemoryRepository(
     EntityRepository[TEntity],
     metaclass=ABCMeta
 ):
-    pickle_path: Path | None
-    store: dict[Identifier, Optional[TEntity] | RemovedPlaceholder]
-
     def __init__(
         self,
-        picke_path: Path | None = None,
-        store: dict[Identifier, Optional[TEntity] | RemovedPlaceholder] = {}
+        store: dict[Identifier, Optional[TEntity] | RemovedPlaceholder] | None = None
     ) -> None:
-        self.pickle_path = picke_path
-        if picke_path:
-            with open(picke_path, "rb") as f:
-                self.store = pickle.load(f)
-        else:
-            self.store = store
+        self.store = {} if store is None else store
 
     def add(self, entity: TEntity):
         self.store[entity.id] = entity
@@ -53,13 +42,13 @@ class InMemoryRepository(
         result = self.store.get(entity.id, None)
         assert result != REMOVED, f"Entity {entity.id} already removed"
 
-    def persist(self, _entity: TEntity):
-        pass
+    def persist(self, entity: TEntity):
+        raise NotImplementedError()
 
     def persist_all(self):
         for entity in self.store.values():
             if entity is not None and entity != REMOVED:
-                self.persist(entity)
+                self.persist(cast(TEntity, entity))
 
 
 class InMemoryPolicyRepository(
@@ -83,6 +72,7 @@ class InMemoryPolicyRepository(
             if stored == REMOVED:
                 continue
             policy = cast(Policy, stored)
+            print(policy)
             if not policy.active:
                 continue
             out.append(policy)

@@ -28,24 +28,18 @@ class SQLAlchemyRepository(
     EntityRepository[TEntity],
     metaclass=ABCMeta
 ):
-    session: Session
-    map_entity_to_model: Callable[[TEntity], TModel]
-    map_model_to_entity: Callable[[TModel], TEntity]
-
-    _identity_map: dict[Identifier, Optional[TEntity] | RemovedPlaceholder]
-
     def __init__(
         self,
         map_entity_to_model: Callable[[TEntity], TModel],
         map_model_to_entity: Callable[[TModel], TEntity],
         session: Session,
         identity_map: dict[
-            Identifier, Optional[TEntity] | RemovedPlaceholder] = {}
+            Identifier, Optional[TEntity] | RemovedPlaceholder] | None = None
     ) -> None:
         self.session = session
-        self._identity_map = identity_map
         self.map_entity_to_model = map_entity_to_model
         self.map_model_to_entity = map_model_to_entity
+        self._identity_map = {} if identity_map is None else identity_map
 
     @abstractmethod
     def get_query(self) -> Query[TModel]:
