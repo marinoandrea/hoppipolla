@@ -1,3 +1,4 @@
+from policy_manager.config import ServiceLocator
 from policy_manager.domain.use_cases import (CreatePolicyInput,
                                              CreatePolicyOutput,
                                              ValidatePathInput,
@@ -7,7 +8,6 @@ from policy_manager.infra.database.vendors.sqlalchemy import get_session
 from policy_manager.infra.database.vendors.sqlalchemy.repositories import (
     SQLAlchemyIssuerRepository, SQLAlchemyMetaPolicyRepository,
     SQLAlchemyPolicyRepository)
-from policy_manager.infra.services.nip_client import NipClientGRPCService
 
 
 class PolicyManagerService:
@@ -27,6 +27,7 @@ class PolicyManagerService:
                     policy_repository,
                     issuer_repository,
                     meta_policy_repository,
+                    ServiceLocator.asp_manager,
                     input_data
                 )
 
@@ -46,10 +47,13 @@ class PolicyManagerService:
         with get_session() as session:
             try:
                 policy_repository = SQLAlchemyPolicyRepository(session)
-                nip_client_service = NipClientGRPCService()
 
                 output = validate_path(
-                    policy_repository, nip_client_service, input_data)
+                    policy_repository,
+                    ServiceLocator.nip_client,
+                    ServiceLocator.asp_manager,
+                    input_data
+                )
 
                 policy_repository.persist_all()
 

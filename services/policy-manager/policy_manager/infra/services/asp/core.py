@@ -1,8 +1,8 @@
-from dataclasses import dataclass
-from enum import Enum
-
 import clingo
 from policy_manager.domain.entities import HopReading, MetaPolicy, Path, Policy
+from policy_manager.domain.services import (AspManager,
+                                            ConflictResolutionResult,
+                                            ConflictResolutionStatus)
 
 from .grammar import (CollectedSymbol, ContainsSymbol, HopReadingSymbol,
                       HopSymbol, IssuerSymbol, OverpowersSymbol, PathSymbol,
@@ -48,29 +48,9 @@ overpowers(P1, P2) :-
 '''
 
 
-class ConflictResolutionStatus(Enum):
-    RESOLVED = "RESOLVED"
-    NOT_RESOLVED = "NOT_RESOLVED"
+class ClingoAspManager(AspManager):
 
-
-@dataclass(frozen=True)
-class ConflictResolutionResult:
-    status: ConflictResolutionStatus = ConflictResolutionStatus.NOT_RESOLVED
-    policy_weak: Policy | None = None
-    policy_strong: Policy | None = None
-
-    def __post_init__(self):
-        if self.status == ConflictResolutionStatus.NOT_RESOLVED:
-            assert self.policy_strong is None\
-                and self.policy_weak is None
-        else:
-            assert self.policy_strong is not None\
-                and self.policy_weak is not None
-
-
-class AspManager:
-    @staticmethod
-    def check_syntax(statements: str, check_conflicts=False) -> None:
+    def check_syntax(self, statements: str, check_conflicts=False) -> None:
         try:
             ctl = clingo.Control()
             ctl.add("base", [], statements)
@@ -80,8 +60,7 @@ class AspManager:
         except RuntimeError as e:
             raise ValueError(str(e))
 
-    @staticmethod
-    def has_conflicts(p1: Policy, p2: Policy) -> bool:
+    def has_conflicts(self, p1: Policy, p2: Policy) -> bool:
         try:
             ctl = clingo.Control()
             ctl.add("base", [], p1.statements)
@@ -93,8 +72,8 @@ class AspManager:
             return True
         return False
 
-    @staticmethod
     def resolve_conflicts(
+        self,
         meta_policies: list[MetaPolicy],
         p1: Policy,
         p2: Policy
@@ -146,8 +125,8 @@ class AspManager:
         return ConflictResolutionResult(
             status=ConflictResolutionStatus.NOT_RESOLVED)
 
-    @staticmethod
     def validate(
+        self,
         policies: list[Policy],
         path: Path,
         readings: list[HopReading]

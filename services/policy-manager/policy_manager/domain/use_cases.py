@@ -4,7 +4,6 @@ from functools import partial
 from multiprocessing.pool import ThreadPool
 from typing import cast
 
-from policy_manager.domain.asp import AspManager, ConflictResolutionStatus
 from policy_manager.domain.entities import (HopReading, Identifier, Path,
                                             Policy, TimeInterval)
 from policy_manager.domain.errors import (ExternalServiceError,
@@ -12,14 +11,15 @@ from policy_manager.domain.errors import (ExternalServiceError,
 from policy_manager.domain.repositories import (IssuerRepository,
                                                 MetaPolicyRepository,
                                                 PolicyRepository)
-from policy_manager.domain.services import NipClientService
+
+from .services import AspManager, ConflictResolutionStatus, NipClientService
 
 
 @dataclass(frozen=True)
 class CreatePolicyInput:
     issuer_id: Identifier
     statements: str
-    description: str | None
+    description: str | None = None
 
 
 @dataclass(frozen=True)
@@ -31,6 +31,7 @@ def create_policy(
     policy_repository: PolicyRepository,
     issuer_repository: IssuerRepository,
     meta_policy_repository: MetaPolicyRepository,
+    asp_manager: AspManager,
     data: CreatePolicyInput
 ) -> CreatePolicyOutput:
     """
@@ -44,12 +45,14 @@ def create_policy(
         raise InvalidInputError(
             "issuer_id", data.issuer_id, "Issuer does not exist")
 
+    new_policy = Policy(
+        issuer=issuer,
+        statements=data.statements,
+        description=data.description
+    )
+
     try:
-        new_policy = Policy(
-            issuer=issuer,
-            statements=data.statements,
-            description=data.description
-        )
+        asp_manager.check_syntax(new_policy.statements, check_conflicts=True)
     except ValueError:
         raise InvalidInputError(
             "statements", data.statements, "Invalid ASP syntax for policy")
@@ -57,13 +60,13 @@ def create_policy(
     policy_repository.add(new_policy)
 
     for old_policy in policy_repository.get_all_active():
-        if not new_policy.conflicts_with(old_policy):
+        if not asp_manager.has_conflicts(new_policy, old_policy):
             continue
 
         # this is cached per session so it's fine to call it at every iteration
         meta_policies = meta_policy_repository.get_all_active()
 
-        result = AspManager.resolve_conflicts(
+        result = asp_manager.resolve_conflicts(
             meta_policies,
             new_policy,
             old_policy
@@ -104,6 +107,7 @@ class ValidatePathOutput:
 def validate_path(
     policy_repository: PolicyRepository,
     nip_client_service: NipClientService,
+    asp_manager: AspManager,
     input_data: ValidatePathInput
 ) -> ValidatePathOutput:
     """
@@ -127,6 +131,6 @@ def validate_path(
     except Exception as e:
         raise ExternalServiceError("NipClientService", str(e))
 
-    valid = AspManager.validate(active_policies, input_data.path, readings)
+    valid = asp_manager.validate(active_policies, input_data.path, readings)
 
     return ValidatePathOutput(valid=valid)

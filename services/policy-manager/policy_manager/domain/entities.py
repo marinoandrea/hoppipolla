@@ -1,10 +1,7 @@
 from abc import ABCMeta
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Self
 from uuid import UUID, uuid4
-
-from policy_manager.domain.asp import AspManager
 
 # these identifier related assignments allow to change the ID generation logic
 # across the whole domain layer for this service
@@ -76,21 +73,6 @@ class Policy(Entity):
     Whether the policy is currently in use (false if overridden by a meta-rule)
     """
 
-    def __post_init__(self):
-        super().__post_init__()
-        AspManager.check_syntax(self.statements, check_conflicts=True)
-
-    def conflicts_with(self, other: Self) -> bool:
-        """
-        Check whether this policy conflicts with the other provided policy.
-        """
-        merged = "\n".join((self.statements, other.statements))
-        try:
-            AspManager.check_syntax(merged, check_conflicts=True)
-            return False
-        except ValueError:
-            return True
-
     def deactivate(self) -> None:
         """
         Flag this policy as non-active due to a meta-constraint.
@@ -108,10 +90,6 @@ class MetaPolicy(Entity):
     """
     statements: str = field(default="")
     """ASP source code for the policy"""
-
-    def __post_init__(self):
-        super().__post_init__()
-        AspManager.check_syntax(self.statements, check_conflicts=True)
 
 
 HopReading = dict[str, str | int | float]
