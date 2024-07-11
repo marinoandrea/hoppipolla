@@ -1,3 +1,7 @@
+import random
+import re
+import string
+
 import clingo
 from policy_manager.domain.entities import HopReading, MetaPolicy, Path, Policy
 from policy_manager.domain.services import (AspManager,
@@ -48,6 +52,21 @@ overpowers(P1, P2) :-
 '''
 
 
+def _generate_random_namespace() -> str:
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for _ in range(5))
+
+
+def _generate_namespaces(n: int = 0) -> list[str]:
+    namespaces = set()
+    for _ in range(n):
+        namespace = _generate_random_namespace()
+        while namespace in namespaces:
+            namespace = _generate_random_namespace()
+        namespaces.add(namespace)
+    return list(namespaces)
+
+
 class ClingoAspManager(AspManager):
 
     def check_syntax(self, statements: str, check_conflicts=False) -> None:
@@ -63,14 +82,38 @@ class ClingoAspManager(AspManager):
     def has_conflicts(self, p1: Policy, p2: Policy) -> bool:
         try:
             ctl = clingo.Control()
-            ctl.add("base", [], p1.statements)
-            ctl.add("base", [], p2.statements)
+
+            self.add_policies_with_namespace(
+                ctl, [p1.statements, p2.statements])
+
             ctl.ground([("base", [])])
             if ctl.is_conflicting:
                 return True
         except RuntimeError:
             return True
         return False
+
+    def _add_namespace(self, statements: str, prefix: str) -> str:
+        lines = statements.splitlines()
+        new_program = []
+
+        for line in lines:
+            match = re.match(r'^\s*#const\s+(\w+)\s*=\s*(.+)\s*\.$', line)
+            if match is not None:
+                const_name = match.groups()[0]
+                const_value = match.groups()[1]
+                new_program.append(f"#const {prefix}_{const_name} = {const_value}.")
+            else:
+                new_program.append(line)
+
+        return "\n".join(new_program)
+
+    def add_policies_with_namespace(
+            self, control: clingo.Control, policies: list[str]) -> None:
+        namespaces = _generate_namespaces(len(policies))
+        for i in range(len(policies)):
+            control.add(
+                "base", [], self._add_namespace(policies[i], namespaces[i]))
 
     def resolve_conflicts(
         self,
@@ -80,8 +123,10 @@ class ClingoAspManager(AspManager):
     ) -> ConflictResolutionResult:
         control = clingo.Control()
         control.add("base", [], PRELUDE_META)
-        for mp in meta_policies:
-            control.add("base", [], mp.statements)
+
+        self.add_policies_with_namespace(
+            control, list(map(lambda p: p.statements, meta_policies)))
+
         control.add("base", [], repr(IssuerSymbol(p1.issuer)))
         control.add("base", [], repr(IssuerSymbol(p2.issuer)))
         control.add("base", [], repr(PolicySymbol(p1)))
@@ -138,8 +183,8 @@ class ClingoAspManager(AspManager):
         control.add("base", [], PRELUDE)
 
         # merge the previously validated active policies
-        for p in policies:
-            control.add("base", [], p.statements)
+        self.add_policies_with_namespace(
+            control, list(map(lambda p: p.statements, policies)))
 
         # instantiate the path predicates
         control.add("base", [], repr(PathSymbol(path)))
