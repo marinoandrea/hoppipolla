@@ -62,7 +62,7 @@ class InMemoryRepository(
                 self.persist(entity)
 
 
-class SQLAlchemyPolicyRepository(
+class InMemoryPolicyRepository(
     PolicyRepository,
     InMemoryRepository[Policy]
 ):
@@ -89,14 +89,14 @@ class SQLAlchemyPolicyRepository(
         return out
 
 
-class SQLAlchemyIssuerRepository(
+class InMemoryIssuerRepository(
     IssuerRepository,
     InMemoryRepository[Issuer]
 ):
     pass
 
 
-class SQLAlchemyMetaPolicyRepository(
+class InMemoryMetaPolicyRepository(
     MetaPolicyRepository,
     InMemoryRepository[MetaPolicy]
 ):
