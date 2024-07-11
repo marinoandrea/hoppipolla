@@ -57,8 +57,6 @@ def create_policy(
         raise InvalidInputError(
             "statements", data.statements, "Invalid ASP syntax for policy")
 
-    policy_repository.add(new_policy)
-
     for old_policy in policy_repository.get_all_active():
         if not asp_manager.has_conflicts(new_policy, old_policy):
             continue
@@ -73,7 +71,6 @@ def create_policy(
         )
 
         if result.status == ConflictResolutionStatus.NOT_RESOLVED:
-            policy_repository.remove(new_policy)
             raise InvalidInputError(
                 "statements",
                 data.statements,
@@ -82,6 +79,8 @@ def create_policy(
 
         # cast is safe due to validation logic of result
         cast(Policy, result.policy_weak).deactivate()
+
+    policy_repository.add(new_policy)
 
     return CreatePolicyOutput(policy=new_policy)
 
