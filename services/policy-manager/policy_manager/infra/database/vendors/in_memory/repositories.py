@@ -72,7 +72,6 @@ class InMemoryPolicyRepository(
             if stored == REMOVED:
                 continue
             policy = cast(Policy, stored)
-            print(policy)
             if not policy.active:
                 continue
             out.append(policy)
