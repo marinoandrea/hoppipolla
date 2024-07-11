@@ -10,7 +10,7 @@
   "python.analysis.typeCheckingMode": "basic",
 
   "protoc": {
-    "options": ["--proto_path=protos", "--proto_path=${workspaceRoot}/proto"]
+    "options": ["--proto_path=protos", "--proto_path=${workspaceRoot}/protos"]
   },
 
   "typescript.suggest.autoImports": true,
