@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+
+package hoppipolla.nip;
+
+message HopData {
+  string isd_as = 1;
+  float total_energy_consumption = 2;
+  float peak_energy_consumption = 3;
+  float off_peak_energy_consumption = 4;
+  float energy_consumption_per_hour = 5;
+  float renewable_energy_consumption = 6;
+  float non_renewable_energy_consumption = 7;
+  float co2_emissions = 8;
+  float renewable_energy_percentage = 9;
+  float uptime = 10;
+  float downtime = 11;
+  float maintenance_frequency = 12;
+  float energy_efficiency_rating = 13;
+  float sustainability_index = 14;
+  float carbon_footprint_reduction = 15;
+  google.protobuf.Timestamp last_maintenance_date = 16;
+  google.protobuf.Timestamp data_collected_date = 17;
+  string location = 18;
+}
+
+service NipClient {
+  rpc GetLatestHopData(GetLatestHopDataRequest)
+      returns (HopData) {}
+  rpc GetHopDataForInterval(GetHopDataForIntervalRequest)
+      returns (GetHopDataForIntervalResponse) {}
+  rpc GetAggregatedHopData(GetLatestHopDataRequest)
+      returns (HopData) {}
+}
+
+message GetLatestHopDataRequest { string isd_as = 1; }
+
+message GetAggregatedHopDataRequest {
+  string isd_as = 1;
+  hoppipolla.common.Interval interval = 2;
+}
+
+message GetHopDataForIntervalRequest {
+  string isd_as = 1;
+  hoppipolla.common.Interval interval = 2;
+}
+message GetHopDataForIntervalResponse {
+  repeated HopData data = 1;
+}

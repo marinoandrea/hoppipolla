@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package hoppipolla.path;
+
+// SCION network hop in a path
+message Hop {
+  // ISD-AS address
+  string isd_as = 1;
+  // inbound interface
+  string ifid = 2;
+}
+
+// SCION path between local source and destination
+message Path {
+  // unique fingerprint for the path
+  string fingerprint = 1;
+  // The source ISD-AS of the segment.
+  string src_isd_as = 2;
+  // The destination ISD-AS of the segment.
+  string dst_isd_as = 3;
+  // string representation of the path hops
+  string sequence = 4;
+  // date and time of path expiration
+  google.protobuf.Timestamp expiration = 5;
+  // maximum transmission unit expressed in bytes
+  uint64 mtu = 6;
+  // list of hops between source and destination
+  repeated Hop hops = 7;
+}
+
+/* The service responsible for probing paths and validate them based on
+ * installed policies */
+service PathAnalyzer {
+  // Request a valid path given remote addr
+  rpc GetPathsForAddr(GetPathsForAddrRequest)
+      returns (GetPathsForAddrResponse) {}
+}
+
+message GetPathsForAddrRequest { string destination = 1; }
+message GetPathsForAddrResponse { repeated Path paths = 1; }

@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "path.proto";
+import "common.proto";
+
+package hoppipolla.policy;
+
+// Body responsible for issuing a policy.
+//
+// It can be a governmental entity, an association, an organization,
+// or even an individual.
+message Issuer {
+  string id = 1;
+  string name = 2;
+  optional string description = 3;
+}
+
+// Policy validating a path based on hops and relative NIP data using 
+// Hoppipolla ASP conventions.
+message Policy {
+  string id = 1;
+  string issuer_id = 2;
+  bool active = 3;
+  string statements = 4;
+  optional string description = 5;
+}
+
+service PolicyManager {
+  rpc CreatePolicy(CreatePolicyRequest) returns (CreatePolicyResponse) {}
+  rpc DeletePolicy(DeletePolicyRequest) returns (google.protobuf.Empty) {}
+  rpc CreateIssuer(CreateIssuerRequest) returns (CreateIssuerResponse) {}
+  rpc ListPolicies(google.protobuf.Empty) returns (ListPoliciesRespose) {}
+  rpc ValidatePath(ValidatePathRequest) returns (ValidatePathResponse) {}
+  rpc GetLatestPolicyTimestamp(google.protobuf.Empty)
+      returns (GetLatestPolicyTimestampResponse) {}
+}
+
+message CreatePolicyRequest { 
+  string issuer_id = 1;
+  string statements = 2;
+  optional string description = 3; 
+}
+message CreatePolicyResponse { 
+  string id = 1; 
+}
+
+message DeletePolicyRequest { 
+  string id = 1; 
+}
+
+message CreateIssuerRequest { 
+  string name = 1;
+ }
+message CreateIssuerResponse { 
+  string id = 1; 
+}
+
+message ListPoliciesRespose {
+  repeated Policy policies = 1;
+}
+
+message ValidatePathRequest { 
+  hoppipolla.path.Path path = 1; 
+  optional hoppipolla.common.Interval data_interval = 2;
+}
+message ValidatePathResponse {
+  string fingerprint = 1;
+  bool valid = 2;
+}
+
+message GetLatestPolicyTimestampResponse { 
+  google.protobuf.Timestamp timestamp = 1; 
+}
