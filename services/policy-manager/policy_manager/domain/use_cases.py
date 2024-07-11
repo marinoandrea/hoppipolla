@@ -32,30 +32,30 @@ def create_policy(
     issuer_repository: IssuerRepository,
     meta_policy_repository: MetaPolicyRepository,
     asp_manager: AspManager,
-    data: CreatePolicyInput
+    input_data: CreatePolicyInput
 ) -> CreatePolicyOutput:
     """
     Add a path-level policy to the service. This use-case also takes care of
     resolving conflicts and consolidating the current state of the system into
     a single policy that is then stored for later use in validation.
     """
-    issuer = issuer_repository.get_by_id(data.issuer_id)
+    issuer = issuer_repository.get_by_id(input_data.issuer_id)
 
     if issuer is None:
         raise InvalidInputError(
-            "issuer_id", data.issuer_id, "Issuer does not exist")
+            "issuer_id", input_data.issuer_id, "Issuer does not exist")
+
+    try:
+        asp_manager.check_syntax(input_data.statements, check_conflicts=True)
+    except ValueError:
+        raise InvalidInputError(
+            "statements", input_data.statements, "Invalid ASP syntax for policy")
 
     new_policy = Policy(
         issuer=issuer,
-        statements=data.statements,
-        description=data.description
+        statements=input_data.statements,
+        description=input_data.description
     )
-
-    try:
-        asp_manager.check_syntax(new_policy.statements, check_conflicts=True)
-    except ValueError:
-        raise InvalidInputError(
-            "statements", data.statements, "Invalid ASP syntax for policy")
 
     for old_policy in policy_repository.get_all_active():
         if not asp_manager.has_conflicts(new_policy, old_policy):
@@ -73,7 +73,7 @@ def create_policy(
         if result.status == ConflictResolutionStatus.NOT_RESOLVED:
             raise InvalidInputError(
                 "statements",
-                data.statements,
+                input_data.statements,
                 f"Conflict with {old_policy} cannot be resolved"
             )
 
