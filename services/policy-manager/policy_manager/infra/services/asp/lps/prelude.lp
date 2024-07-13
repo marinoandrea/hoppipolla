@@ -15,9 +15,8 @@ latest_data_collected_date(Hop, MaxTmp) :-
     hop(Hop),
     MaxTmp = #max {
         Tmp : data_collected_date(Data, Tmp), collected(Hop, Data) }.
+% FIXME: MaxTmp breaks if timestamps are equal
 
 latest_data(Hop, Data) :-
     latest_data_collected_date(Hop, MaxTmp),
     data_collected_date(Data, MaxTmp).
-
-#show valid/1.
