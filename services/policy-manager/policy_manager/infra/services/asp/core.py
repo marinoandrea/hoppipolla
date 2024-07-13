@@ -79,17 +79,6 @@ class HoppipollaClingoPolicyProgram(HoppipollaClingoProgram):
                     return True
         return False
 
-    @property
-    def has_conflicts(self) -> bool:
-        try:
-            self.control.ground()
-            # TODO: detect conflicts with symbolic analysis
-            if self.control.is_conflicting:
-                return True
-        except RuntimeError:
-            return True
-        return False
-
 
 class HoppipollaClingoMetaPolicyProgram(HoppipollaClingoProgram, AspMetaHandle):
     def __init__(self, meta_policies: list[MetaPolicy]) -> None:
