@@ -71,13 +71,10 @@ class HoppipollaClingoPolicyProgram(HoppipollaClingoProgram):
             for reading in filter(lambda r: r["isd_as"] == hop.isd_as, readings):
                 self.add(HopReadingSymbol(reading))
                 self.add(CollectedSymbol(hop, reading))
+        self.add(ValidSymbol(path))
         self.control.ground()
-        path_is_valid = ValidSymbol(path).to_clingo()[0]
-        with self.control.solve(yield_=True) as handle:
-            for model in handle:
-                if model.contains(path_is_valid):
-                    return True
-        return False
+        result = self.control.solve()
+        return bool(result.satisfiable)
 
 
 class HoppipollaClingoMetaPolicyProgram(HoppipollaClingoProgram, AspMetaHandle):

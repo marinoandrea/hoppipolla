@@ -70,23 +70,23 @@ class HopReadingSymbol(HoppipollaSymbol):
 
     def to_clingo(self) -> Sequence[clingo.Symbol]:
         symbols: list[clingo.Symbol] = []
-        symbols.append(clingo.Function(
-            "data",
-            [clingo.String(str(self.reading["id"]))]
-        ))
+
+        data_id_symbol = clingo.String(str(self.reading["id"]))
+        symbols.append(clingo.Function("data", [data_id_symbol]))
+
         for field in self.reading:
             if field == "id":
                 continue
             parsed = self._parse_value(field)
             value = clingo.Number(parsed) if type(parsed) is int\
                 else clingo.String(str(parsed))
-            symbols.append(clingo.Function(field, [value]))
+            symbols.append(clingo.Function(field, [data_id_symbol, value]))
         return symbols
 
     def _parse_value(self, field: str) -> int | str:
         raw_value = self.reading[field]
         if isinstance(raw_value, datetime):
-            return int(raw_value.timestamp() * 1000)
+            return round(raw_value.timestamp())
         elif type(raw_value) is int:
             return raw_value
         elif type(raw_value) is float:
@@ -102,7 +102,7 @@ class HopReadingSymbol(HoppipollaSymbol):
                 continue
             parsed = self._parse_value(field)
             value = parsed if type(parsed) is int else f'"{parsed}"'
-            lines.append(f'{field}({value}).')
+            lines.append(f'{field}("{self.reading['id']}", {value}).')
         return "\n".join(lines)
 
 
