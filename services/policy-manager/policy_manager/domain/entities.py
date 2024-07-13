@@ -14,13 +14,13 @@ class Entity(metaclass=ABCMeta):
     """
     Represents an abstract entity in the domain.
     """
-    id: Identifier = field(default_factory=generate_identifier)
+    id: Identifier = field(default_factory=generate_identifier, compare=True, hash=True)
     """Unique identifier for the entity"""
 
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=datetime.now, compare=False, hash=False)
     """Creation timestamp for the entity"""
 
-    updated_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now, compare=False, hash=False)
     """Last modification timestamp for the entity"""
 
     def __post_init__(self):
@@ -34,10 +34,10 @@ class Issuer(Entity):
     Represents a policy-maker. This is an entity representing anything from
     an individual to an organization (e.g. governmental agency, company etc.).
     """
-    name: str = field(default="local")
+    name: str = field(default="local", compare=False, hash=False)
     """Name of the issuing body or individual"""
 
-    description: str | None = field(default=None)
+    description: str | None = field(default=None, compare=False, hash=False)
     """Human-readable description of the issuer"""
 
     def __post_init__(self):
@@ -59,16 +59,16 @@ class Policy(Entity):
     Represents a policy object. It contains the string representation of the
     ASP source code as uploaded by the user before consolidation and grounding.
     """
-    issuer: Issuer = field(default_factory=Issuer)
+    issuer: Issuer = field(default_factory=Issuer, compare=False, hash=False)
     """The entity that published the policy"""
 
-    statements: str = field(default="")
+    statements: str = field(default="", repr=False, compare=False, hash=False)
     """ASP source code for the policy"""
 
-    description: str | None = field(default=None)
+    description: str | None = field(default=None, compare=False, hash=False)
     """Human-readable description of the policy"""
 
-    active: bool = field(default=True)
+    active: bool = field(default=True, compare=False, hash=False)
     """
     Whether the policy is currently in use (false if overridden by a meta-rule)
     """
@@ -88,8 +88,11 @@ class MetaPolicy(Entity):
     the ASP source code as uploaded by the user before consolidation and
     grounding.
     """
-    statements: str = field(default="")
+    statements: str = field(default="", repr=False, compare=False, hash=False)
     """ASP source code for the policy"""
+
+    description: str | None = field(default=None, compare=False, hash=False)
+    """Human-readable description of the meta-policy"""
 
 
 HopReading = dict[str, str | int | float]

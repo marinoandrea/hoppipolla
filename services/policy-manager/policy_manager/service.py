@@ -20,13 +20,10 @@ class PolicyManagerService:
             try:
                 policy_repository = SQLAlchemyPolicyRepository(session)
                 issuer_repository = SQLAlchemyIssuerRepository(session)
-                meta_policy_repository = SQLAlchemyMetaPolicyRepository(
-                    session)
 
                 output = create_policy(
                     policy_repository,
                     issuer_repository,
-                    meta_policy_repository,
                     ServiceLocator.asp_manager,
                     input_data
                 )
@@ -47,9 +44,11 @@ class PolicyManagerService:
         with get_session() as session:
             try:
                 policy_repository = SQLAlchemyPolicyRepository(session)
+                meta_policy_repository = SQLAlchemyMetaPolicyRepository(session)
 
                 output = validate_path(
                     policy_repository,
+                    meta_policy_repository,
                     ServiceLocator.nip_client,
                     ServiceLocator.asp_manager,
                     input_data

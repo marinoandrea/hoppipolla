@@ -1,165 +1,141 @@
-import random
-import re
-import string
+import os
+from abc import ABCMeta
+from contextlib import contextmanager
+from functools import lru_cache
+from typing import Iterator, Self, Sequence
 
 import clingo
 from policy_manager.domain.entities import HopReading, MetaPolicy, Path, Policy
-from policy_manager.domain.services import (AspManager,
+from policy_manager.domain.services import (AspManager, AspMetaHandle,
                                             ConflictResolutionResult,
                                             ConflictResolutionStatus)
 
-from .grammar import (CollectedSymbol, ContainsSymbol, HopReadingSymbol,
-                      HopSymbol, IssuerSymbol, OverpowersSymbol, PathSymbol,
-                      PolicySymbol)
+from .grammar import (CollectedSymbol, ContainsSymbol, HoppipollaSymbol,
+                      HopReadingSymbol, HopSymbol, IssuerSymbol,
+                      OverridesSymbol, PathSymbol, PolicySymbol, ValidSymbol)
 
-PRELUDE = '''
-% basic types
-hop(Hop)    :- contains(Path, Hop), path(Path).
-path(Path)  :- contains(Path, Hop), hop(Hop).
-data(Data)  :- collected(Hop, Data), hop(Hop).
-hop(Hop)    :- collected(Hop, Data), data(Data).
-
-% sanity check for typization
-:- hop(X), data(X).
-:- hop(X), path(X).
-:- data(X), path(X).
-
-% utilities
-latest_data_collected_date(Hop, MaxTmp) :-
-    hop(Hop),
-    MaxTmp = #max {
-        Tmp : data_collected_date(Data, Tmp), collected(Hop, Data) }.
-
-latest_data(Hop, Data) :-
-    latest_data_collected_date(Hop, MaxTmp),
-    data_collected_date(Data, MaxTmp).
-'''
-
-PRELUDE_META = '''
-% type safety
-:- policy(X), issuer(X).
-:- has_issued(I1, P), has_issued(I2, P), issuer(I1), issuer(I2), policy(P).
-
-% inference
-issuer(I) :- has_issued(I, _).
-policy(P) :- has_issued(_, P).
-
-% definitions
-overpowers(P1, P2) :-
-    has_issued(I1, P1),
-    has_issued(I2, P2),
-    has_power_over(I1, I2).
-'''
+PATH_PRELUDE = os.path.join(os.path.dirname(__file__), "lps", "prelude.lp")
+PATH_PRELUDE_META = os.path.join(os.path.dirname(__file__), "lps", "prelude-meta.lp")
 
 
-def _generate_random_namespace() -> str:
-    letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for _ in range(5))
+@lru_cache
+def load_prelude():
+    with open(PATH_PRELUDE) as f:
+        return f.read()
 
 
-def _generate_namespaces(n: int = 0) -> list[str]:
-    namespaces = set()
-    for _ in range(n):
-        namespace = _generate_random_namespace()
-        while namespace in namespaces:
-            namespace = _generate_random_namespace()
-        namespaces.add(namespace)
-    return list(namespaces)
+@lru_cache
+def load_prelude_meta():
+    with open(PATH_PRELUDE_META) as f:
+        return f.read()
 
 
-class ClingoAspManager(AspManager):
+class HoppipollaClingoProgram(metaclass=ABCMeta):
+    def __init__(self) -> None:
+        self.control = clingo.Control()
+        self._string = ""
 
-    def check_syntax(self, statements: str, check_conflicts=False) -> None:
+    def add(self, symbol: HoppipollaSymbol) -> Self:
+        self._string += f"\n{str(symbol)}"
+        with self.control.backend() as backend:
+            for clingo_symbol in symbol.to_clingo():
+                atom = backend.add_atom(clingo_symbol)
+                backend.add_rule([atom])
+        return self
+
+    def __str__(self) -> str:
+        return self._string
+
+
+class HoppipollaClingoPolicyProgram(HoppipollaClingoProgram):
+    def __init__(self, policy: Policy) -> None:
+        super().__init__()
+        prelude = load_prelude()
+        self._string += prelude
+        self.control.add("base", [], prelude)
         try:
-            ctl = clingo.Control()
-            ctl.add("base", [], statements)
-            ctl.ground([("base", [])])
-            if check_conflicts and ctl.is_conflicting:
-                raise ValueError("Policy has conflicts")
-        except RuntimeError as e:
-            raise ValueError(str(e))
+            self._string += policy.statements
+            self.control.add("base", [], policy.statements)
+        except (RuntimeError, MemoryError) as e:
+            raise ValueError(e)
 
-    def has_conflicts(self, p1: Policy, p2: Policy) -> bool:
+    def validate(
+        self,
+        path: Path,
+        readings: Sequence[HopReading]
+    ) -> bool:
+        self.add(PathSymbol(path))
+        for hop in path.hops:
+            self.add(HopSymbol(hop))
+            self.add(ContainsSymbol(path, hop))
+            for reading in filter(lambda r: r["isd_as"] == hop.isd_as, readings):
+                self.add(HopReadingSymbol(reading))
+                self.add(CollectedSymbol(hop, reading))
+        self.control.ground()
+        path_is_valid = ValidSymbol(path).to_clingo()[0]
+        with self.control.solve(yield_=True) as handle:
+            for model in handle:
+                if model.contains(path_is_valid):
+                    return True
+        return False
+
+    @property
+    def has_conflicts(self) -> bool:
         try:
-            ctl = clingo.Control()
-
-            self.add_policies_with_namespace(
-                ctl, [p1.statements, p2.statements])
-
-            ctl.ground([("base", [])])
-            if ctl.is_conflicting:
+            self.control.ground()
+            # TODO: detect conflicts with symbolic analysis
+            if self.control.is_conflicting:
                 return True
         except RuntimeError:
             return True
         return False
 
-    def _add_namespace(self, statements: str, prefix: str) -> str:
-        lines = statements.splitlines()
-        new_program = []
 
-        for line in lines:
-            match = re.match(r'^\s*#const\s+(\w+)\s*=\s*(.+)\s*\.$', line)
-            if match is not None:
-                const_name = match.groups()[0]
-                const_value = match.groups()[1]
-                new_program.append(f"#const {prefix}_{const_name} = {const_value}.")
-            else:
-                new_program.append(line)
+class HoppipollaClingoMetaPolicyProgram(HoppipollaClingoProgram, AspMetaHandle):
+    def __init__(self, meta_policies: list[MetaPolicy]) -> None:
+        super().__init__()
+        self.meta_policies = meta_policies
+        prelude = load_prelude_meta()
+        self._string += prelude
+        self.control.add("base", [], prelude)
+        try:
+            for meta_policy in self.meta_policies:
+                self._string += meta_policy.statements
+                self.control.add("base", [], meta_policy.statements)
+        except (RuntimeError, MemoryError) as e:
+            raise ValueError(e)
 
-        return "\n".join(new_program)
+    def resolve_conflicts(self, policy_a: Policy, policy_b: Policy) -> ConflictResolutionResult:
+        self.add(IssuerSymbol(policy_a.issuer))\
+            .add(IssuerSymbol(policy_b.issuer))\
+            .add(PolicySymbol(policy_a))\
+            .add(PolicySymbol(policy_b))
 
-    def add_policies_with_namespace(
-            self, control: clingo.Control, policies: list[str]) -> None:
-        namespaces = _generate_namespaces(len(policies))
-        for i in range(len(policies)):
-            control.add(
-                "base", [], self._add_namespace(policies[i], namespaces[i]))
+        self.control.ground()
 
-    def resolve_conflicts(
-        self,
-        meta_policies: list[MetaPolicy],
-        p1: Policy,
-        p2: Policy
-    ) -> ConflictResolutionResult:
-        control = clingo.Control()
-        control.add("base", [], PRELUDE_META)
-
-        self.add_policies_with_namespace(
-            control, list(map(lambda p: p.statements, meta_policies)))
-
-        control.add("base", [], repr(IssuerSymbol(p1.issuer)))
-        control.add("base", [], repr(IssuerSymbol(p2.issuer)))
-        control.add("base", [], repr(PolicySymbol(p1)))
-        control.add("base", [], repr(PolicySymbol(p2)))
-        control.ground([("base", [])])
-
-        predicate_p1p2 = repr(OverpowersSymbol(p1, p2))
-        predicate_p2p1 = repr(OverpowersSymbol(p2, p1))
-
-        with control.solve(yield_=True) as handle:
+        pred_a_ovverides_b = OverridesSymbol(policy_a, policy_b).to_clingo()[0]
+        pred_b_overrides_a = OverridesSymbol(policy_b, policy_a).to_clingo()[0]
+        with self.control.solve(yield_=True) as handle:
             for model in handle:
-                atoms = model.symbols(atoms=True)
-                p1_overpowers_p2 = any(a.match(predicate_p1p2, 2)
-                                       for a in atoms)
-                p2_overpowers_p1 = any(a.match(predicate_p2p1, 2)
-                                       for a in atoms)
+                a_overrides_b = model.contains(pred_a_ovverides_b)
+                b_overrides_a = model.contains(pred_b_overrides_a)
 
-                if p1_overpowers_p2 and not p2_overpowers_p1:
+                if a_overrides_b and not b_overrides_a:
                     return ConflictResolutionResult(
                         status=ConflictResolutionStatus.RESOLVED,
-                        policy_strong=p1,
-                        policy_weak=p2
+                        policy_strong=policy_a,
+                        policy_weak=policy_b
                     )
-                elif p2_overpowers_p1 and not p1_overpowers_p2:
+                elif b_overrides_a and not a_overrides_b:
                     return ConflictResolutionResult(
                         status=ConflictResolutionStatus.RESOLVED,
-                        policy_strong=p2,
-                        policy_weak=p1
+                        policy_strong=policy_b,
+                        policy_weak=policy_a
                     )
                 # the issuers have equal power
-                elif p1_overpowers_p2 and p2_overpowers_p1:
-                    policy_latest = p1 if p1.created_at > p2.created_at else p2
-                    policy_oldest = p1 if p1.created_at < p2.created_at else p2
+                elif a_overrides_b and b_overrides_a:
+                    policy_latest = policy_a if policy_a.created_at > policy_b.created_at else policy_b
+                    policy_oldest = policy_a if policy_a.created_at < policy_b.created_at else policy_b
                     return ConflictResolutionResult(
                         status=ConflictResolutionStatus.RESOLVED,
                         policy_strong=policy_latest,
@@ -170,36 +146,27 @@ class ClingoAspManager(AspManager):
         return ConflictResolutionResult(
             status=ConflictResolutionStatus.NOT_RESOLVED)
 
+
+class ClingoAspManager(AspManager):
+
+    def check_syntax(self, statements: str, check_conflicts=False) -> None:
+        try:
+            ctl = clingo.Control(message_limit=0)
+            ctl.add("base", [], statements)
+            ctl.ground()
+            if check_conflicts and ctl.is_conflicting:
+                raise ValueError("Policy has internal conflicts")
+        except RuntimeError as e:
+            raise ValueError(str(e))
+
+    @contextmanager
+    def meta(self, meta_policies: list[MetaPolicy]) -> Iterator[HoppipollaClingoMetaPolicyProgram]:
+        yield HoppipollaClingoMetaPolicyProgram(meta_policies)
+
     def validate(
         self,
-        policies: list[Policy],
+        policy: Policy,
         path: Path,
         readings: list[HopReading]
     ) -> bool:
-        """
-        Check whether a given SCION path complies with the published policies.
-        """
-        control = clingo.Control()
-        control.add("base", [], PRELUDE)
-
-        # merge the previously validated active policies
-        self.add_policies_with_namespace(
-            control, list(map(lambda p: p.statements, policies)))
-
-        # instantiate the path predicates
-        control.add("base", [], repr(PathSymbol(path)))
-        for hop in path.hops:
-            control.add("base", [], repr(HopSymbol(hop)))
-            control.add("base", [], repr(ContainsSymbol(path, hop)))
-
-            hop_readings = filter(
-                lambda r: r["isd_as"] == hop.isd_as, readings)
-
-            for reading in hop_readings:
-                control.add("base", [], repr(HopReadingSymbol(reading)))
-                control.add("base", [], repr(CollectedSymbol(hop, reading)))
-
-        control.ground([("base", [])])
-
-        res = control.solve()
-        return bool(res.satisfiable)
+        return HoppipollaClingoPolicyProgram(policy).validate(path, readings)
