@@ -14,18 +14,21 @@ class Entity(metaclass=ABCMeta):
     """
     Represents an abstract entity in the domain.
     """
-    id: Identifier = field(default_factory=generate_identifier, compare=True, hash=True)
+    id: Identifier = field(default_factory=generate_identifier, compare=True)
     """Unique identifier for the entity"""
 
-    created_at: datetime = field(default_factory=datetime.now, compare=False, hash=False)
+    created_at: datetime = field(default_factory=datetime.now, compare=False)
     """Creation timestamp for the entity"""
 
-    updated_at: datetime = field(default_factory=datetime.now, compare=False, hash=False)
+    updated_at: datetime = field(default_factory=datetime.now, compare=False)
     """Last modification timestamp for the entity"""
 
     def __post_init__(self):
         if self.created_at > self.updated_at:
             raise ValueError("created_at cannot be greater than updated_at")
+
+    def __hash__(self) -> int:
+        return hash(self.id)
 
 
 @dataclass
@@ -34,10 +37,10 @@ class Issuer(Entity):
     Represents a policy-maker. This is an entity representing anything from
     an individual to an organization (e.g. governmental agency, company etc.).
     """
-    name: str = field(default="local", compare=False, hash=False)
+    name: str = field(default="local", compare=False)
     """Name of the issuing body or individual"""
 
-    description: str | None = field(default=None, compare=False, hash=False)
+    description: str | None = field(default=None, compare=False)
     """Human-readable description of the issuer"""
 
     def __post_init__(self):
@@ -52,6 +55,9 @@ class Issuer(Entity):
         self.name = new_name
         self.updated_at = datetime.now()
 
+    def __hash__(self) -> int:
+        return hash(self.id)
+
 
 @dataclass
 class Policy(Entity):
@@ -59,16 +65,16 @@ class Policy(Entity):
     Represents a policy object. It contains the string representation of the
     ASP source code as uploaded by the user before consolidation and grounding.
     """
-    issuer: Issuer = field(default_factory=Issuer, compare=False, hash=False)
+    issuer: Issuer = field(default_factory=Issuer, compare=False)
     """The entity that published the policy"""
 
-    statements: str = field(default="", repr=False, compare=False, hash=False)
+    statements: str = field(default="", repr=False, compare=False)
     """ASP source code for the policy"""
 
-    description: str | None = field(default=None, compare=False, hash=False)
+    description: str | None = field(default=None, compare=False)
     """Human-readable description of the policy"""
 
-    active: bool = field(default=True, compare=False, hash=False)
+    active: bool = field(default=True, compare=False)
     """
     Whether the policy is currently in use (false if overridden by a meta-rule)
     """
@@ -80,6 +86,9 @@ class Policy(Entity):
         self.active = False
         self.updated_at = datetime.now()
 
+    def __hash__(self) -> int:
+        return hash(self.id)
+
 
 @dataclass
 class MetaPolicy(Entity):
@@ -88,11 +97,14 @@ class MetaPolicy(Entity):
     the ASP source code as uploaded by the user before consolidation and
     grounding.
     """
-    statements: str = field(default="", repr=False, compare=False, hash=False)
+    statements: str = field(default="", repr=False, compare=False)
     """ASP source code for the policy"""
 
-    description: str | None = field(default=None, compare=False, hash=False)
+    description: str | None = field(default=None, compare=False)
     """Human-readable description of the meta-policy"""
+
+    def __hash__(self) -> int:
+        return hash(self.id)
 
 
 HopReading = dict[str, str | int | float]
@@ -119,7 +131,7 @@ class Hop:
     SCION isolation domain + AS address.
     """
 
-    ifid: str | None
+    ifid: str | None = None
     """
     The inbound interface identifier for the hop.
     """
