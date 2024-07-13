@@ -11,7 +11,7 @@ from policy_manager.domain.repositories import (IssuerRepository,
                                                 MetaPolicyRepository,
                                                 PolicyRepository)
 
-from .services import AspManager, NipClientService
+from .services import AspManager, ConflictResolutionStatus, NipClientService
 
 
 @dataclass(frozen=True)
@@ -120,14 +120,20 @@ def validate_path(
 
     with asp_manager.meta(meta_policies) as meta_handle:
         while True:
-            for unsat_policy in remaining_unsat_policies:
+            for unsat_policy in unsat_policies:
                 for other_policy in active_policies:
-                    if unsat_policies == other_policy:
+                    if unsat_policy == other_policy:
                         continue
+
                     result = meta_handle.resolve_conflicts(
                         unsat_policy,
                         other_policy
                     )
+
+                    if result.status == ConflictResolutionStatus.NOT_RESOLVED\
+                            or result.policy_strong is None:
+                        raise RuntimeError(f"Conflict between {unsat_policy} and {other_policy} cannot be solved")
+
                     if result.policy_strong != unsat_policy:
                         remaining_unsat_policies.remove(unsat_policy)
 
