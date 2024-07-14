@@ -3,7 +3,7 @@
 
 #const min_sustainability_index = 10.
 
-valid(Path) :- Idx > min_sustainability_index,
+-valid(Path) :- Idx < min_sustainability_index,
     sustainability_index(Data, Idx),
     latest_data(Hop, Data),
     contains(Path, Hop).

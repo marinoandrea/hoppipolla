@@ -8,6 +8,6 @@ sum_energy_consumption_per_hour(Path, Sum) :-
                 latest_data(Hop, Data),
                 contains(Path, Hop) }.
 
-valid(Path) :- 
-    Value < max_sum_energy_consumption_per_hour,
+-valid(Path) :- 
+    Value > max_sum_energy_consumption_per_hour,
     sum_energy_consumption_per_hour(Path, Value).
