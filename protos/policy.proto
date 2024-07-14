@@ -34,7 +34,9 @@ service PolicyManager {
   rpc ListPolicies(google.protobuf.Empty) returns (ListPoliciesRespose) {}
   rpc ValidatePath(ValidatePathRequest) returns (ValidatePathResponse) {}
   rpc GetLatestPolicyTimestamp(google.protobuf.Empty)
-      returns (GetLatestPolicyTimestampResponse) {}
+    returns (GetLatestPolicyTimestampResponse) {}
+  rpc GetDefaultIssuer(google.protobuf.Empty) 
+    returns (GetDefaultIssuerResponse) {}
 }
 
 message CreatePolicyRequest { 
@@ -72,4 +74,10 @@ message ValidatePathResponse {
 
 message GetLatestPolicyTimestampResponse { 
   google.protobuf.Timestamp timestamp = 1; 
+}
+
+message GetDefaultIssuerResponse {
+  string id = 1;
+  string name = 2;
+  optional string description = 3;
 }
