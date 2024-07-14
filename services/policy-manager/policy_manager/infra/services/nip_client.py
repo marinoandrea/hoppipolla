@@ -27,9 +27,6 @@ def singleton(cls: Type[T]) -> Callable[..., T]:
 
 @singleton
 class NipClientGRPCService(NipClientService):
-    channel: grpc.Channel
-    client: NipClientStub
-
     _instance: Self | None = None
 
     def __init__(self, addr: str = config.nip_client_address) -> None:
