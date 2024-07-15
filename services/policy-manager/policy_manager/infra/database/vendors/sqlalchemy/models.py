@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class BaseModel(DeclarativeBase):
-    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True))
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
