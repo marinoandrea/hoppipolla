@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  path-analyzer:
+    build:
+      context: ./services/path-analyzer
+    container_name: path-analyzer
+    environment:
+      - NODE_ENV=${HOPPIPOLLA_ENV:-development}
+      - HOST=${HOPPIPOLLA_POLICY_MANAGER_HOST:-localhost}
+      - PORT=${HOPPIPOLLA_POLICY_MANAGER_PORT:-27001}
+      - SCIOND_HOST=${HOPPIPOLLA_SCIOND_HOST:-localhost}
+      - SCIOND_PORT=${HOPPIPOLLA_SCIOND_PORT:-30255}
+      - DATABASE_URI=/var/lib/hoppipolla/path-analyzer/sqlite.db
+      - POLICY_MANAGER_URL="${HOPPIPOLLA_POLICY_MANAGER_HOST:-localhost}:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}"
+    volumes:
+      - /var/lib/hoppipolla/path-analyzer
+    ports:
+      - 127.0.0.1:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}
+    networks:
+      - hoppipolla
+
+  policy-manager:
+    build:
+      context: ./services/policy-manager
+    container_name: policy-manager
+    depends_on:
+      - policy-manager_db
+    environment:
+      - ENV=${HOPPIPOLLA_ENV:-development}
+      - HOST=${HOPPIPOLLA_POLICY_MANAGER_HOST:-localhost}
+      - PORT=${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}
+      - DATABASE_URI=postgresql://${HOPPIPOLLA_POLICY_MANAGER_PG_USER:-postgres}:${HOPPIPOLLA_POLICY_MANAGER_PG_PASSWORD}@policy-manager_db:${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}/${HOPPIPOLLA_POLICY_MANAGER_PG_DBNAME:-hoppipolla}
+    ports:
+      - 127.0.0.1:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}
+    networks:
+      - hoppipolla
+
+  policy-manager_db:
+    image: postgres:15
+    container_name: policy-manager_db
+    restart: always
+    user: postgres
+    environment:
+      - POSTGRES_PORT=${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}
+      - POSTGRES_USER=${HOPPIPOLLA_POLICY_MANAGER_PG_USER:-postgres}
+      - POSTGRES_PASSWORD=${HOPPIPOLLA_POLICY_MANAGER_PG_PASSWORD}
+      - POSTGRES_DB=${HOPPIPOLLA_POLICY_MANAGER_PG_DBNAME:-hoppipolla}
+    volumes:
+      - /var/lib/postgresql/data
+    ports:
+      - 127.0.0.1:${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}:${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hoppipolla
+
+  nip-proxy:
+    build:
+      context: ./services/nip-proxy
+    container_name: nip-proxy
+    environment:
+      - NODE_ENV=${HOPPIPOLLA_ENV:-development}
+      - HOST=${HOPPIPOLLA_NIP_PROXY_HOST:-localhost}
+      - PORT=${HOPPIPOLLA_NIP_PROXY_PORT:-27003}
+    ports:
+      - 127.0.0.1:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27003}:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27003}
+    networks:
+      - hoppipolla
+
+networks:
+  hoppipolla:
+    driver: bridge
