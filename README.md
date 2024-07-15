@@ -23,7 +23,7 @@ Do not route network traffic through nodes that are located in country X
 Which, using the Hoppipolla-specific ASP syntax would look like:
 
 ```
-valid(Path) :- country(Hop, "X"), hop(Hop), path(Path), contains(Path, Hop).
+-valid(Path) :- country(Hop, "X"), hop(Hop), path(Path), contains(Path, Hop).
 ```
 
 The framework is constituted by a suite of services and the language-specific
@@ -53,7 +53,7 @@ issuer = client.get_default_issuer()
 
 policy1 = client.publish_policy(
     issuer,
-    'valid(Path) :- country(Hop, "X"), hop(Hop), path(Path), contains(Path, Hop).'
+    '-valid(Path) :- country(Hop, "X"), hop(Hop), path(Path), contains(Path, Hop).'
 )
 
 result = client.ping("1-ff00:0:110,10.0.0.1")
