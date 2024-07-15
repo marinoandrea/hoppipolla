@@ -1,4 +1,3 @@
-from policy_manager.config import ServiceLocator
 from policy_manager.domain.use_cases import (CreatePolicyInput,
                                              CreatePolicyOutput,
                                              ValidatePathInput,
@@ -8,6 +7,7 @@ from policy_manager.infra.database.vendors.sqlalchemy import get_session
 from policy_manager.infra.database.vendors.sqlalchemy.repositories import (
     SQLAlchemyIssuerRepository, SQLAlchemyMetaPolicyRepository,
     SQLAlchemyPolicyRepository)
+from policy_manager.locator import ServiceLocator
 
 
 class PolicyManagerService:
