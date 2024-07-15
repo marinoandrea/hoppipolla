@@ -11,6 +11,9 @@ grpc-stubs = "^1.53.0.5"
 sqlalchemy = "^2.0.31"
 clingo = "^5.7.1"
 cachetools = "^5.3.3"
+grpcio = "^1.64.1"
+protobuf = "^5.27.2"
+psycopg2-binary = "^2.9.9"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -21,5 +24,5 @@ grpcio-tools = "^1.64.1"
 mypy-protobuf = "^3.6.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.8.3"]
 build-backend = "poetry.core.masonry.api"
