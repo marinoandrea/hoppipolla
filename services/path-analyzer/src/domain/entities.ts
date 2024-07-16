@@ -121,11 +121,11 @@ export enum PathStatus {
 
 export type Hop = {
   node: Node;
-  inboundInterface?: number;
-  outboundInterface?: number;
+  inboundInterface: number;
+  outboundInterface: number;
 };
 
-const hopInterfaceSchema = z.coerce.number().int().gte(0).optional().default(0);
+const hopInterfaceSchema = z.coerce.number().int().gte(0).default(0);
 
 const pathInputSchema = z.object({
   fingerprint: z.string(),
@@ -133,12 +133,6 @@ const pathInputSchema = z.object({
   dst: isdAsSchema,
   localIp: z.string().ip(),
   mtuBytes: z.number().int().gte(0).default(0),
-  sequence: z
-    .string()
-    .regex(
-      /([0-9]+-([0-9a-fA-F]{1,4}:){2}[0-9a-fA-F]{1,4}(#([0-9]+,)?([0-9]+))?\s?)*/,
-      "invalid ISD-AS#IF,IF sequence"
-    ),
   status: z.nativeEnum(PathStatus).default(PathStatus.UNKNOWN),
   expiresAt: dateInThePastSchema.default(() => new Date()),
   lastValidatedAt: dateInThePastSchema.nullable().default(null),
@@ -162,7 +156,6 @@ export class Path extends Entity {
   private _dst: IsdAs;
   private _localIp: IpAddress;
   private _mtuBytes: number;
-  private _sequence: string;
   private _status: PathStatus;
   private _expiresAt: Date;
   private _lastValidatedAt: Date | null = null;
@@ -182,7 +175,6 @@ export class Path extends Entity {
     this._dst = validationResult.data.dst as IsdAs;
     this._localIp = validationResult.data.localIp as IpAddress;
     this._mtuBytes = validationResult.data.mtuBytes;
-    this._sequence = validationResult.data.sequence;
     this._expiresAt = validationResult.data.expiresAt;
     this._status = validationResult.data.status;
     this._lastValidatedAt = validationResult.data.lastValidatedAt;
@@ -222,7 +214,12 @@ export class Path extends Entity {
    * Path string representation for hops as space separated tuples in the form ISD-AS#IF,IF.
    */
   public get sequence() {
-    return this._sequence;
+    return this.hops
+      .map(
+        (hop) =>
+          `${hop.node.isdAs}#${hop.inboundInterface},${hop.outboundInterface}`
+      )
+      .join(" ");
   }
 
   /**
