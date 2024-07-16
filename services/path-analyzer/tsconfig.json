@@ -29,6 +29,6 @@
       "src/*": ["./src/*"]
     }
   },
-  "include": ["./src/**/*.ts", ".eslintrc.config.mjs", "drizzle.config.ts"],
+  "include": ["./src/**/*.ts", ".eslintrc.config.mjs"],
   "exclude": ["node_modules", "__tests__", "jest_cache"]
 }
