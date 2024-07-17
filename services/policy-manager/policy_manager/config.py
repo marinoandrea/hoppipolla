@@ -16,10 +16,10 @@ class Config:
 
 config = Config(
     env=os.environ.get("ENV", "development"),
-    host=os.environ.get("HOST", "localhost:27002"),
-    port=int(os.environ.get("PORT", "localhost:27002")),
+    host=os.environ.get("HOST", "0.0.0.0"),
+    port=int(os.environ.get("PORT", "27002")),
     log_level=int(os.environ.get("LOG_LEVEL", logging.INFO)),
     n_workers=int(os.environ.get("MAX_WORKERS", 10)),
     nip_proxy_uri=os.environ.get("NIP_PROXY_URI", "localhost:27003"),
-    database_uri=os.environ.get("DATABASE_URI", "postgres://localhost:5432/postgres")
+    database_uri=os.environ.get("DATABASE_URI", "postgresql://postgres:test@127.0.0.1:5432/postgres")
 )

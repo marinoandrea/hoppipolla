@@ -10,6 +10,15 @@ from policy_manager.grpc import PolicyManagerGRPCServicer
 from policy_manager.protos import policy_pb2_grpc
 
 
+class LoggingInterceptor(grpc.ServerInterceptor):
+
+    def intercept_service(self, continuation, handler_call_details):
+        request_path = handler_call_details.method
+        logging.info(request_path)
+        response = continuation(handler_call_details)
+        return response
+
+
 def main():
     logging.basicConfig(
         level=config.log_level,
@@ -18,14 +27,14 @@ def main():
     )
 
     pool = futures.ThreadPoolExecutor(max_workers=config.n_workers)
-    server = grpc.server(pool)
+    server = grpc.server(pool, interceptors=[LoggingInterceptor()])
 
     policy_pb2_grpc.add_PolicyManagerServicer_to_server(
         PolicyManagerGRPCServicer(),
         server
     )
 
-    address = f"{config.host}:{config.port}"
+    address = f"[::]:{config.port}"
     server.add_insecure_port(address)
     server.start()
 
