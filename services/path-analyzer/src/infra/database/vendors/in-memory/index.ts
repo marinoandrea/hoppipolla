@@ -18,6 +18,11 @@ abstract class InMemoryEntityRepository<TEntity extends Entity>
     this.store = store;
   }
 
+  public addAll(entities: TEntity[]): Promise<void> {
+    entities.forEach(this.add);
+    return Promise.resolve();
+  }
+
   public add(entity: TEntity): Promise<void> {
     assert.notEqual(
       this.store.get(entity.id),
