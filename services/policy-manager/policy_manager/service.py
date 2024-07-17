@@ -49,7 +49,7 @@ class PolicyManagerService:
                 output = validate_path(
                     policy_repository,
                     meta_policy_repository,
-                    ServiceLocator.nip_client,
+                    ServiceLocator.nip_proxy,
                     ServiceLocator.asp_manager,
                     input_data
                 )

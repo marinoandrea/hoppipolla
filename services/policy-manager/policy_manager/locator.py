@@ -9,9 +9,9 @@ from .config import config
 
 @dataclass
 class ServiceLocator:
-    nip_client: NipProxy
+    nip_proxy: NipProxy
     asp_manager: AspManager
 
 
-ServiceLocator.nip_client = NipProxyGRPCService(config.nip_proxy_uri)
+ServiceLocator.nip_proxy = NipProxyGRPCService(config.nip_proxy_uri)
 ServiceLocator.asp_manager = ClingoAspManager()
