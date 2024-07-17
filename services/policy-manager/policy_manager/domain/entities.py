@@ -43,6 +43,9 @@ class Issuer(Entity):
     description: str | None = field(default=None, compare=False)
     """Human-readable description of the issuer"""
 
+    default: bool = field(default=False, compare=False)
+    """Whether this entity represents a default issuer for the application instance"""
+
     def __post_init__(self):
         super().__post_init__()
         if len(self.name) <= 1:
@@ -131,7 +134,12 @@ class Hop:
     SCION isolation domain + AS address.
     """
 
-    ifid: str | None = None
+    inbound_interface: int = 0
+    """
+    The inbound interface identifier for the hop.
+    """
+
+    outbound_interface: int = 0
     """
     The inbound interface identifier for the hop.
     """

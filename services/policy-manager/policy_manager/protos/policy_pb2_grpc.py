@@ -58,7 +58,7 @@ class PolicyManagerStub(object):
         self.ListPolicies = channel.unary_unary(
                 '/hoppipolla.policy.PolicyManager/ListPolicies',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=policy__pb2.ListPoliciesRespose.FromString,
+                response_deserializer=policy__pb2.ListPoliciesResponse.FromString,
                 _registered_method=True)
         self.ValidatePath = channel.unary_unary(
                 '/hoppipolla.policy.PolicyManager/ValidatePath',
@@ -143,7 +143,7 @@ def add_PolicyManagerServicer_to_server(servicer, server):
             'ListPolicies': grpc.unary_unary_rpc_method_handler(
                     servicer.ListPolicies,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=policy__pb2.ListPoliciesRespose.SerializeToString,
+                    response_serializer=policy__pb2.ListPoliciesResponse.SerializeToString,
             ),
             'ValidatePath': grpc.unary_unary_rpc_method_handler(
                     servicer.ValidatePath,
@@ -268,7 +268,7 @@ class PolicyManager(object):
             target,
             '/hoppipolla.policy.PolicyManager/ListPolicies',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            policy__pb2.ListPoliciesRespose.FromString,
+            policy__pb2.ListPoliciesResponse.FromString,
             options,
             channel_credentials,
             insecure,

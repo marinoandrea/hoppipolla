@@ -1,13 +1,16 @@
 import logging
-from typing import Generator
 
 import grpc
+from google.protobuf.timestamp_pb2 import Timestamp
 from policy_manager.domain.entities import Hop, Identifier, Path, TimeInterval
 from policy_manager.domain.errors import InvalidInputError
 from policy_manager.domain.use_cases import (CreatePolicyInput,
                                              ValidatePathInput)
 from policy_manager.protos.policy_pb2 import (CreatePolicyRequest,
                                               CreatePolicyResponse,
+                                              GetDefaultIssuerResponse,
+                                              GetLatestPolicyTimestampResponse,
+                                              ListPoliciesResponse, Policy,
                                               ValidatePathRequest,
                                               ValidatePathResponse)
 from policy_manager.protos.policy_pb2_grpc import PolicyManagerServicer
@@ -25,11 +28,13 @@ class PolicyManagerGRPCServicer(PolicyManagerServicer):
         self,
         request: CreatePolicyRequest,
         context: grpc.ServicerContext
-    ) -> Generator[CreatePolicyResponse, None, None]:
+    ) -> CreatePolicyResponse | None:
         """
         This RPC handler represents the external API for adding a path-level
         policy to the service.
         """
+        response = CreatePolicyResponse()
+
         input_data = CreatePolicyInput(
             issuer_id=Identifier(request.issuer_id),
             statements=request.statements,
@@ -38,7 +43,7 @@ class PolicyManagerGRPCServicer(PolicyManagerServicer):
 
         try:
             output = PolicyManagerService.execute_create_policy(input_data)
-            yield CreatePolicyResponse(id=str(output.policy.id))
+            response = CreatePolicyResponse(id=str(output.policy.id))
 
         except InvalidInputError as e:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
@@ -48,42 +53,80 @@ class PolicyManagerGRPCServicer(PolicyManagerServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             logging.error(str(e))
 
+        return response
+
     def DeletePolicy(self, request, context):
-        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def ListPolicies(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+    def ListPolicies(self, _, context):
+        response = ListPoliciesResponse()
+
+        try:
+            output = PolicyManagerService.execute_list_all_policies()
+            response = ListPoliciesResponse(policies=list(map(lambda p: Policy(
+                id=str(p.id),
+                active=p.active,
+                description=p.description,
+                statements=p.statements,
+                issuer_id=str(p.issuer.id)
+            ), output)))
+
+        except Exception as e:
+            context.set_code(grpc.StatusCode.INTERNAL)
+            logging.error(str(e))
+
+        return response
+
+    def GetDefaultIssuer(self, _, context: grpc.ServicerContext):
+        response = GetDefaultIssuerResponse()
+
+        try:
+            output = PolicyManagerService.execute_get_default_issuer()
+
+            response = GetDefaultIssuerResponse(
+                id=str(output.id),
+                name=output.name,
+                description=output.description
+            )
+
+        except Exception as e:
+            context.set_code(grpc.StatusCode.INTERNAL)
+            logging.error(str(e))
+
+        return response
 
     def ValidatePath(
         self,
         request: ValidatePathRequest,
         context: grpc.ServicerContext
-    ) -> Generator[ValidatePathResponse, None, None]:
+    ) -> ValidatePathResponse | None:
         """
         This RPC handler represents the external API for validating a path.
         """
+        response = ValidatePathResponse()
+
         input_data = ValidatePathInput(
             path=Path(
                 fingerprint=request.path.fingerprint,
                 isd_as_dst=request.path.dst_isd_as,
                 isd_as_src=request.path.src_isd_as,
-                hops=[Hop(isd_as=hop.isd_as, ifid=hop.ifid)
-                      for hop in request.path.hops]
+                hops=[Hop(
+                    isd_as=hop.isd_as,
+                    inbound_interface=hop.inbound_interface,
+                    outbound_interface=hop.outbound_interface
+                ) for hop in request.path.hops]
             ),
             interval=TimeInterval(
                 request.data_interval.start_time.ToDatetime(),
                 request.data_interval.end_time.ToDatetime(),
             )
         )
+
         try:
             output = PolicyManagerService.execute_validate_path(input_data)
-            yield ValidatePathResponse(
+            response = ValidatePathResponse(
                 fingerprint=request.path.fingerprint,
                 valid=output.valid
             )
@@ -96,8 +139,19 @@ class PolicyManagerGRPCServicer(PolicyManagerServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             logging.error(str(e))
 
-    def GetLatestPolicyTimestamp(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        return response
+
+    def GetLatestPolicyTimestamp(self, _, context) -> GetLatestPolicyTimestampResponse | None:
+        response = GetLatestPolicyTimestampResponse()
+
+        try:
+            output = PolicyManagerService.execute_get_latest_policy_timestamp()
+            response = GetLatestPolicyTimestampResponse(
+                timestamp=Timestamp(seconds=int(output.timestamp()), nanos=0)
+            )
+
+        except Exception as e:
+            context.set_code(grpc.StatusCode.INTERNAL)
+            logging.error(str(e))
+
+        return response

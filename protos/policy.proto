@@ -31,7 +31,7 @@ service PolicyManager {
   rpc CreatePolicy(CreatePolicyRequest) returns (CreatePolicyResponse) {}
   rpc DeletePolicy(DeletePolicyRequest) returns (google.protobuf.Empty) {}
   rpc CreateIssuer(CreateIssuerRequest) returns (CreateIssuerResponse) {}
-  rpc ListPolicies(google.protobuf.Empty) returns (ListPoliciesRespose) {}
+  rpc ListPolicies(google.protobuf.Empty) returns (ListPoliciesResponse) {}
   rpc ValidatePath(ValidatePathRequest) returns (ValidatePathResponse) {}
   rpc GetLatestPolicyTimestamp(google.protobuf.Empty)
     returns (GetLatestPolicyTimestampResponse) {}
@@ -59,7 +59,7 @@ message CreateIssuerResponse {
   string id = 1; 
 }
 
-message ListPoliciesRespose {
+message ListPoliciesResponse {
   repeated Policy policies = 1;
 }
 

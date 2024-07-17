@@ -39,8 +39,9 @@ class IssuerModel(BaseModel):
 
     name: Mapped[str] = mapped_column(Text(), unique=True)
     description: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    default: Mapped[bool] = mapped_column(Boolean(), default=False)
 
-    issuer: Mapped[list["PolicyModel"]] = relationship(
+    policies: Mapped[list["PolicyModel"]] = relationship(
         "PolicyModel", back_populates="issuer")
 
     def __repr__(self) -> str:

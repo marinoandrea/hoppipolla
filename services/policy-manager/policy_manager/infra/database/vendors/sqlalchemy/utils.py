@@ -12,6 +12,7 @@ def map_issuer_model_to_entity(model: IssuerModel) -> Issuer:
         created_at=model.created_at,
         updated_at=model.updated_at,
         name=model.name,
+        default=model.default
     )
 
 
@@ -23,7 +24,8 @@ def map_issuer_entity_to_model(entity: Issuer) -> IssuerModel:
         id=entity.id,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
-        name=entity.name
+        name=entity.name,
+        default=entity.default
     )
 
 

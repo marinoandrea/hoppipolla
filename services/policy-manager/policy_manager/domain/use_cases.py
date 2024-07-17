@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import partial
 from multiprocessing.pool import ThreadPool
 
-from policy_manager.domain.entities import (HopReading, Identifier, Path,
-                                            Policy, TimeInterval)
+from policy_manager.domain.entities import (HopReading, Identifier, Issuer,
+                                            Path, Policy, TimeInterval)
 from policy_manager.domain.errors import (ExternalServiceError,
                                           InvalidInputError)
 from policy_manager.domain.repositories import (IssuerRepository,
@@ -143,3 +143,28 @@ def validate_path(
             unsat_policies = remaining_unsat_policies
 
     return ValidatePathOutput(valid=len(unsat_policies) == 0)
+
+
+def get_latest_policy_timestamp(
+    policy_repository: PolicyRepository,
+    meta_policy_repository: MetaPolicyRepository
+) -> datetime:
+    latest_policy_tmp = policy_repository\
+        .get_max_created_at()\
+        .replace(tzinfo=timezone(offset=timedelta()))
+    latest_meta_policy_tmp = meta_policy_repository\
+        .get_max_created_at()\
+        .replace(tzinfo=timezone(offset=timedelta()))
+    return max(latest_policy_tmp, latest_meta_policy_tmp)
+
+
+def get_default_issuer(issuer_repository: IssuerRepository) -> Issuer:
+    issuer = issuer_repository.get_one_default()
+    if issuer is None:
+        issuer = Issuer(default=True)
+        issuer_repository.add(issuer)
+    return issuer
+
+
+def list_all_policies(policy_repository: PolicyRepository) -> list[Policy]:
+    return policy_repository.get_all_active()

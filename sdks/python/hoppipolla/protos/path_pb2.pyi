@@ -7,12 +7,14 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Hop(_message.Message):
-    __slots__ = ("isd_as", "ifid")
+    __slots__ = ("isd_as", "inbound_interface", "outbound_interface")
     ISD_AS_FIELD_NUMBER: _ClassVar[int]
-    IFID_FIELD_NUMBER: _ClassVar[int]
+    INBOUND_INTERFACE_FIELD_NUMBER: _ClassVar[int]
+    OUTBOUND_INTERFACE_FIELD_NUMBER: _ClassVar[int]
     isd_as: str
-    ifid: str
-    def __init__(self, isd_as: _Optional[str] = ..., ifid: _Optional[str] = ...) -> None: ...
+    inbound_interface: int
+    outbound_interface: int
+    def __init__(self, isd_as: _Optional[str] = ..., inbound_interface: _Optional[int] = ..., outbound_interface: _Optional[int] = ...) -> None: ...
 
 class Path(_message.Message):
     __slots__ = ("fingerprint", "src_isd_as", "dst_isd_as", "sequence", "expiration", "mtu", "hops")
@@ -32,14 +34,14 @@ class Path(_message.Message):
     hops: _containers.RepeatedCompositeFieldContainer[Hop]
     def __init__(self, fingerprint: _Optional[str] = ..., src_isd_as: _Optional[str] = ..., dst_isd_as: _Optional[str] = ..., sequence: _Optional[str] = ..., expiration: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., mtu: _Optional[int] = ..., hops: _Optional[_Iterable[_Union[Hop, _Mapping]]] = ...) -> None: ...
 
-class GetPathsForAddrRequest(_message.Message):
+class GetPathForAddrRequest(_message.Message):
     __slots__ = ("destination",)
     DESTINATION_FIELD_NUMBER: _ClassVar[int]
     destination: str
     def __init__(self, destination: _Optional[str] = ...) -> None: ...
 
-class GetPathsForAddrResponse(_message.Message):
-    __slots__ = ("paths",)
-    PATHS_FIELD_NUMBER: _ClassVar[int]
-    paths: _containers.RepeatedCompositeFieldContainer[Path]
-    def __init__(self, paths: _Optional[_Iterable[_Union[Path, _Mapping]]] = ...) -> None: ...
+class GetPathForAddrResponse(_message.Message):
+    __slots__ = ("path",)
+    PATH_FIELD_NUMBER: _ClassVar[int]
+    path: Path
+    def __init__(self, path: _Optional[_Union[Path, _Mapping]] = ...) -> None: ...

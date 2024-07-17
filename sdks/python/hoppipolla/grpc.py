@@ -8,7 +8,7 @@ from google.protobuf.empty_pb2 import Empty
 
 from .errors import (HoppipollaServiceInitializationError,
                      HoppipollaServiceRequestMaxRetriesError)
-from .protos.path_pb2 import GetPathsForAddrRequest, GetPathsForAddrResponse
+from .protos.path_pb2 import GetPathForAddrRequest, GetPathForAddrResponse
 from .protos.path_pb2_grpc import PathAnalyzerStub
 from .protos.policy_pb2 import (CreatePolicyRequest, CreatePolicyResponse,
                                 DeletePolicyRequest, GetDefaultIssuerResponse)
@@ -56,20 +56,16 @@ class GRPCPathAnalyzerClient(GRPCHoppipollaServiceClient, PathAnalyzerClient):
 
     @with_retries
     def get_path_for_address(self, address: str) -> Optional[Path]:
-        req = GetPathsForAddrRequest(destination=address)
-        res = cast(GetPathsForAddrResponse, self.client.GetPathsForAddr(req))
+        req = GetPathForAddrRequest(destination=address)
+        res = cast(GetPathForAddrResponse, self.client.GetPathForAddr(req))
 
-        if len(res.paths) == 0:
-            self.logger.info(f"no valid paths for {address}")
+        if res is None:
             return None
 
-        path = res.paths[0]
-        self.logger.info(f"selected path '{path.fingerprint}' for {address}")
-
         return Path(
-            fingerprint=path.fingerprint,
-            destination=path.dst_isd_as,
-            sequence=path.sequence
+            fingerprint=res.path.fingerprint,
+            destination=res.path.dst_isd_as,
+            sequence=res.path.sequence
         )
 
 

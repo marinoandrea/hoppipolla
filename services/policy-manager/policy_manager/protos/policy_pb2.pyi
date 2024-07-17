@@ -67,7 +67,7 @@ class CreateIssuerResponse(_message.Message):
     id: str
     def __init__(self, id: _Optional[str] = ...) -> None: ...
 
-class ListPoliciesRespose(_message.Message):
+class ListPoliciesResponse(_message.Message):
     __slots__ = ("policies",)
     POLICIES_FIELD_NUMBER: _ClassVar[int]
     policies: _containers.RepeatedCompositeFieldContainer[Policy]
