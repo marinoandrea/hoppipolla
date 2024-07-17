@@ -7,7 +7,7 @@ from typing import Iterator
 from .entities import Hop, HopReading, MetaPolicy, Path, Policy, TimeInterval
 
 
-class NipClientService(metaclass=ABCMeta):
+class NipProxy(metaclass=ABCMeta):
     """
     Service that exposes an API to retrieve Network Information Plane (NIP)
     data readings about hops in the network.

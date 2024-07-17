@@ -12,10 +12,3 @@ class Interval(_message.Message):
     start_time: _timestamp_pb2.Timestamp
     end_time: _timestamp_pb2.Timestamp
     def __init__(self, start_time: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., end_time: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
-
-class IsdAs(_message.Message):
-    __slots__ = ("isd",)
-    ISD_FIELD_NUMBER: _ClassVar[int]
-    AS_FIELD_NUMBER: _ClassVar[int]
-    isd: str
-    def __init__(self, isd: _Optional[str] = ..., **kwargs) -> None: ...

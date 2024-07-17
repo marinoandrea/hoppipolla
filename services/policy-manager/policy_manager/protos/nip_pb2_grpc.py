@@ -30,7 +30,7 @@ if _version_not_supported:
     )
 
 
-class NipClientStub(object):
+class NipProxyStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -40,23 +40,23 @@ class NipClientStub(object):
             channel: A grpc.Channel.
         """
         self.GetLatestHopData = channel.unary_unary(
-                '/hoppipolla.nip.NipClient/GetLatestHopData',
+                '/hoppipolla.nip.NipProxy/GetLatestHopData',
                 request_serializer=nip__pb2.GetLatestHopDataRequest.SerializeToString,
                 response_deserializer=nip__pb2.HopData.FromString,
                 _registered_method=True)
         self.GetHopDataForInterval = channel.unary_unary(
-                '/hoppipolla.nip.NipClient/GetHopDataForInterval',
+                '/hoppipolla.nip.NipProxy/GetHopDataForInterval',
                 request_serializer=nip__pb2.GetHopDataForIntervalRequest.SerializeToString,
                 response_deserializer=nip__pb2.GetHopDataForIntervalResponse.FromString,
                 _registered_method=True)
         self.GetAggregatedHopData = channel.unary_unary(
-                '/hoppipolla.nip.NipClient/GetAggregatedHopData',
+                '/hoppipolla.nip.NipProxy/GetAggregatedHopData',
                 request_serializer=nip__pb2.GetLatestHopDataRequest.SerializeToString,
                 response_deserializer=nip__pb2.HopData.FromString,
                 _registered_method=True)
 
 
-class NipClientServicer(object):
+class NipProxyServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def GetLatestHopData(self, request, context):
@@ -78,7 +78,7 @@ class NipClientServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_NipClientServicer_to_server(servicer, server):
+def add_NipProxyServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'GetLatestHopData': grpc.unary_unary_rpc_method_handler(
                     servicer.GetLatestHopData,
@@ -97,13 +97,13 @@ def add_NipClientServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'hoppipolla.nip.NipClient', rpc_method_handlers)
+            'hoppipolla.nip.NipProxy', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('hoppipolla.nip.NipClient', rpc_method_handlers)
+    server.add_registered_method_handlers('hoppipolla.nip.NipProxy', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class NipClient(object):
+class NipProxy(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -120,7 +120,7 @@ class NipClient(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/hoppipolla.nip.NipClient/GetLatestHopData',
+            '/hoppipolla.nip.NipProxy/GetLatestHopData',
             nip__pb2.GetLatestHopDataRequest.SerializeToString,
             nip__pb2.HopData.FromString,
             options,
@@ -147,7 +147,7 @@ class NipClient(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/hoppipolla.nip.NipClient/GetHopDataForInterval',
+            '/hoppipolla.nip.NipProxy/GetHopDataForInterval',
             nip__pb2.GetHopDataForIntervalRequest.SerializeToString,
             nip__pb2.GetHopDataForIntervalResponse.FromString,
             options,
@@ -174,7 +174,7 @@ class NipClient(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/hoppipolla.nip.NipClient/GetAggregatedHopData',
+            '/hoppipolla.nip.NipProxy/GetAggregatedHopData',
             nip__pb2.GetLatestHopDataRequest.SerializeToString,
             nip__pb2.HopData.FromString,
             options,

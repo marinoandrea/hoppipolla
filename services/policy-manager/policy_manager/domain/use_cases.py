@@ -11,7 +11,7 @@ from policy_manager.domain.repositories import (IssuerRepository,
                                                 MetaPolicyRepository,
                                                 PolicyRepository)
 
-from .services import AspManager, ConflictResolutionStatus, NipClientService
+from .services import AspManager, ConflictResolutionStatus, NipProxy
 
 
 @dataclass(frozen=True)
@@ -77,7 +77,7 @@ class ValidatePathOutput:
 def validate_path(
     policy_repository: PolicyRepository,
     meta_policy_repository: MetaPolicyRepository,
-    nip_client_service: NipClientService,
+    nip_proxy: NipProxy,
     asp_manager: AspManager,
     input_data: ValidatePathInput
 ) -> ValidatePathOutput:
@@ -90,7 +90,7 @@ def validate_path(
             with ThreadPool(processes=len(input_data.path.hops)) as pool:
                 results = pool.map(
                     partial(
-                        nip_client_service.get_readings_for_interval,
+                        nip_proxy.get_readings_for_interval,
                         input_data.interval
                     ),
                     input_data.path.hops

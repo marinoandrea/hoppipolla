@@ -70,6 +70,11 @@ class PolicyManagerStub(object):
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
                 response_deserializer=policy__pb2.GetLatestPolicyTimestampResponse.FromString,
                 _registered_method=True)
+        self.GetDefaultIssuer = channel.unary_unary(
+                '/hoppipolla.policy.PolicyManager/GetDefaultIssuer',
+                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                response_deserializer=policy__pb2.GetDefaultIssuerResponse.FromString,
+                _registered_method=True)
 
 
 class PolicyManagerServicer(object):
@@ -111,6 +116,12 @@ class PolicyManagerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetDefaultIssuer(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_PolicyManagerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -143,6 +154,11 @@ def add_PolicyManagerServicer_to_server(servicer, server):
                     servicer.GetLatestPolicyTimestamp,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                     response_serializer=policy__pb2.GetLatestPolicyTimestampResponse.SerializeToString,
+            ),
+            'GetDefaultIssuer': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetDefaultIssuer,
+                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    response_serializer=policy__pb2.GetDefaultIssuerResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -307,6 +323,33 @@ class PolicyManager(object):
             '/hoppipolla.policy.PolicyManager/GetLatestPolicyTimestamp',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             policy__pb2.GetLatestPolicyTimestampResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetDefaultIssuer(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/hoppipolla.policy.PolicyManager/GetDefaultIssuer',
+            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            policy__pb2.GetDefaultIssuerResponse.FromString,
             options,
             channel_credentials,
             insecure,

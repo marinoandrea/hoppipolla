@@ -41,10 +41,10 @@ class PathAnalyzerStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.GetPathsForAddr = channel.unary_unary(
-                '/hoppipolla.path.PathAnalyzer/GetPathsForAddr',
-                request_serializer=path__pb2.GetPathsForAddrRequest.SerializeToString,
-                response_deserializer=path__pb2.GetPathsForAddrResponse.FromString,
+        self.GetPathForAddr = channel.unary_unary(
+                '/hoppipolla.path.PathAnalyzer/GetPathForAddr',
+                request_serializer=path__pb2.GetPathForAddrRequest.SerializeToString,
+                response_deserializer=path__pb2.GetPathForAddrResponse.FromString,
                 _registered_method=True)
 
 
@@ -53,7 +53,7 @@ class PathAnalyzerServicer(object):
     installed policies 
     """
 
-    def GetPathsForAddr(self, request, context):
+    def GetPathForAddr(self, request, context):
         """Request a valid path given remote addr
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -63,10 +63,10 @@ class PathAnalyzerServicer(object):
 
 def add_PathAnalyzerServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'GetPathsForAddr': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetPathsForAddr,
-                    request_deserializer=path__pb2.GetPathsForAddrRequest.FromString,
-                    response_serializer=path__pb2.GetPathsForAddrResponse.SerializeToString,
+            'GetPathForAddr': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPathForAddr,
+                    request_deserializer=path__pb2.GetPathForAddrRequest.FromString,
+                    response_serializer=path__pb2.GetPathForAddrResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -82,7 +82,7 @@ class PathAnalyzer(object):
     """
 
     @staticmethod
-    def GetPathsForAddr(request,
+    def GetPathForAddr(request,
             target,
             options=(),
             channel_credentials=None,
@@ -95,9 +95,9 @@ class PathAnalyzer(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/hoppipolla.path.PathAnalyzer/GetPathsForAddr',
-            path__pb2.GetPathsForAddrRequest.SerializeToString,
-            path__pb2.GetPathsForAddrResponse.FromString,
+            '/hoppipolla.path.PathAnalyzer/GetPathForAddr',
+            path__pb2.GetPathForAddrRequest.SerializeToString,
+            path__pb2.GetPathForAddrResponse.FromString,
             options,
             channel_credentials,
             insecure,

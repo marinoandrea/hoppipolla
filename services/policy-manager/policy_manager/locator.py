@@ -1,17 +1,17 @@
 from dataclasses import dataclass
 
-from policy_manager.domain.services import AspManager, NipClientService
+from policy_manager.domain.services import AspManager, NipProxy
 from policy_manager.infra.services.asp import ClingoAspManager
-from policy_manager.infra.services.nip_client import NipClientGRPCService
+from policy_manager.infra.services.nip_proxy import NipProxyGRPCService
 
 from .config import config
 
 
 @dataclass
 class ServiceLocator:
-    nip_client: NipClientService
+    nip_client: NipProxy
     asp_manager: AspManager
 
 
-ServiceLocator.nip_client = NipClientGRPCService(config.nip_client_address)
+ServiceLocator.nip_client = NipProxyGRPCService(config.nip_proxy_uri)
 ServiceLocator.asp_manager = ClingoAspManager()

@@ -5,11 +5,11 @@ from google.protobuf.json_format import MessageToDict
 from google.protobuf.timestamp_pb2 import Timestamp
 from policy_manager.config import config
 from policy_manager.domain.entities import Hop, HopReading, TimeInterval
-from policy_manager.domain.services import NipClientService
+from policy_manager.domain.services import NipProxy
 from policy_manager.protos.common_pb2 import Interval
 from policy_manager.protos.nip_pb2 import (GetHopDataForIntervalRequest,
                                            GetHopDataForIntervalResponse)
-from policy_manager.protos.nip_pb2_grpc import NipClientStub
+from policy_manager.protos.nip_pb2_grpc import NipProxyStub
 
 T = TypeVar('T')
 
@@ -26,12 +26,12 @@ def singleton(cls: Type[T]) -> Callable[..., T]:
 
 
 @singleton
-class NipClientGRPCService(NipClientService):
+class NipProxyGRPCService(NipProxy):
     _instance: Self | None = None
 
-    def __init__(self, addr: str = config.nip_client_address) -> None:
+    def __init__(self, addr: str = config.nip_proxy_uri) -> None:
         self.channel = grpc.insecure_channel(addr)
-        self.client = NipClientStub(self.channel)
+        self.client = NipProxyStub(self.channel)
 
     def get_readings_for_interval(
             self, interval: TimeInterval, hop: Hop) -> list[HopReading]:
