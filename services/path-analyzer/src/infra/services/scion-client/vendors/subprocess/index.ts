@@ -122,8 +122,8 @@ const showpathsOutputSchema = z.object({
       next_hop: z.string(),
       expiry: z.string().transform((s: string) => new Date(s)),
       mtu: z.number().positive(),
-      latency: z.array(z.number()),
-      carbon_intensity: z.array(z.number()),
+      latency: z.array(z.number()).nullable(),
+      carbon_intensity: z.array(z.number()).nullable(),
       // see https://github.com/scionproto/scion/blob/eacdeef5732b67dd5fda83f2cf28bef33c3a9f8d/private/app/path/pathprobe/paths.go#L44
       status: z.enum(["timeout", "alive", "unknown"]),
       local_ip: z.string().ip(),
