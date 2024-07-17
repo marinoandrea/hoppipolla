@@ -42,18 +42,17 @@ def ping(
     `bool`
         Whether the ping was successful
     """
-    executable = "scion ping"
-    options = " ".join([
-        f"-C {n_packets}",
-        f"--sequence {sequence}",
-        f"--sciond {sciond_address}",
-        f"--timeout {timeout_ms}ms"
-    ])
-    command = f"{executable} {address} {options}"
+    command = [
+        "scion", "ping", address,
+        "-C", str(n_packets),
+        "--sequence", sequence,
+        "--sciond", sciond_address,
+        "--timeout", f"{timeout_ms}ms"
+    ]
 
     process = subprocess.run(command)
 
     if process.returncode != 0:
-        raise HoppipollaScionError(process.stderr.decode())
+        raise HoppipollaScionError(process.stderr)
 
     return True

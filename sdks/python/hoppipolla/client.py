@@ -196,7 +196,7 @@ class HoppipollaClient:
 
         valid_path = self.path_analyzer.get_path_for_address(isd_as)
 
-        if valid_path is None:
+        if valid_path is None or len(valid_path.sequence) == 0:
             return PingResult(success=False, path=None)
 
         success = scion.ping(
