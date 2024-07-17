@@ -1,4 +1,5 @@
 import winston from "winston";
+import { config } from "./config";
 
 const format = winston.format.printf(({ level, message }) => {
   return `${new Date().toISOString()} [${level}]: ${message}`;
@@ -6,7 +7,7 @@ const format = winston.format.printf(({ level, message }) => {
 
 const logger = winston
   .createLogger({
-    level: process.env.LOG_LEVEL,
+    level: config.LOG_LEVEL,
     format,
   })
   .add(

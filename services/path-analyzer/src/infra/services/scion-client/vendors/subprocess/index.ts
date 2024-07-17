@@ -38,8 +38,6 @@ export class ScionSubprocessClient implements IScionClient {
     const json = JSON.parse(stdout);
     const result = await showpathsOutputSchema.safeParseAsync(json);
 
-    console.log(result.error?.flatten());
-
     // the result is missing paths if sciond does not find paths
     if (!result.success) {
       return [];
