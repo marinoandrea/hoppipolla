@@ -1,4 +1,8 @@
-import grpc, { ClientUnaryCall, ServiceError } from "@grpc/grpc-js";
+import grpc, {
+  ClientUnaryCall,
+  ServiceError,
+  credentials,
+} from "@grpc/grpc-js";
 import { promisify } from "util";
 
 import { Path } from "src/domain/entities";
@@ -22,10 +26,15 @@ export class PolicyManagerGrpcClient implements IPolicyManager {
   client: policyPb.policy.PolicyManagerClient;
 
   constructor(address: string) {
-    this.client = new policyPb.policy.PolicyManagerClient(
-      address,
-      grpc.credentials.createInsecure()
-    );
+    try {
+      this.client = new policyPb.policy.PolicyManagerClient(
+        address,
+        credentials.createInsecure()
+      );
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   }
 
   async getLatestPolicyTimestamp(): Promise<Date> {

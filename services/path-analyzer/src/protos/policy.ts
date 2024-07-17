@@ -703,7 +703,7 @@ export namespace hoppipolla.policy {
             return CreateIssuerResponse.deserialize(bytes);
         }
     }
-    export class ListPoliciesRespose extends pb_1.Message {
+    export class ListPoliciesResponse extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
             policies?: Policy[];
@@ -724,8 +724,8 @@ export namespace hoppipolla.policy {
         }
         static fromObject(data: {
             policies?: ReturnType<typeof Policy.prototype.toObject>[];
-        }): ListPoliciesRespose {
-            const message = new ListPoliciesRespose({});
+        }): ListPoliciesResponse {
+            const message = new ListPoliciesResponse({});
             if (data.policies != null) {
                 message.policies = data.policies.map(item => Policy.fromObject(item));
             }
@@ -749,8 +749,8 @@ export namespace hoppipolla.policy {
             if (!w)
                 return writer.getResultBuffer();
         }
-        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): ListPoliciesRespose {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new ListPoliciesRespose();
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): ListPoliciesResponse {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new ListPoliciesResponse();
             while (reader.nextField()) {
                 if (reader.isEndGroup())
                     break;
@@ -766,8 +766,8 @@ export namespace hoppipolla.policy {
         serializeBinary(): Uint8Array {
             return this.serialize();
         }
-        static deserializeBinary(bytes: Uint8Array): ListPoliciesRespose {
-            return ListPoliciesRespose.deserialize(bytes);
+        static deserializeBinary(bytes: Uint8Array): ListPoliciesResponse {
+            return ListPoliciesResponse.deserialize(bytes);
         }
     }
     export class ValidatePathRequest extends pb_1.Message {
@@ -1221,8 +1221,8 @@ export namespace hoppipolla.policy {
                 responseStream: false,
                 requestSerialize: (message: dependency_1.google.protobuf.Empty) => Buffer.from(message.serialize()),
                 requestDeserialize: (bytes: Buffer) => dependency_1.google.protobuf.Empty.deserialize(new Uint8Array(bytes)),
-                responseSerialize: (message: ListPoliciesRespose) => Buffer.from(message.serialize()),
-                responseDeserialize: (bytes: Buffer) => ListPoliciesRespose.deserialize(new Uint8Array(bytes))
+                responseSerialize: (message: ListPoliciesResponse) => Buffer.from(message.serialize()),
+                responseDeserialize: (bytes: Buffer) => ListPoliciesResponse.deserialize(new Uint8Array(bytes))
             },
             ValidatePath: {
                 path: "/hoppipolla.policy.PolicyManager/ValidatePath",
@@ -1256,7 +1256,7 @@ export namespace hoppipolla.policy {
         abstract CreatePolicy(call: grpc_1.ServerUnaryCall<CreatePolicyRequest, CreatePolicyResponse>, callback: grpc_1.sendUnaryData<CreatePolicyResponse>): void;
         abstract DeletePolicy(call: grpc_1.ServerUnaryCall<DeletePolicyRequest, dependency_1.google.protobuf.Empty>, callback: grpc_1.sendUnaryData<dependency_1.google.protobuf.Empty>): void;
         abstract CreateIssuer(call: grpc_1.ServerUnaryCall<CreateIssuerRequest, CreateIssuerResponse>, callback: grpc_1.sendUnaryData<CreateIssuerResponse>): void;
-        abstract ListPolicies(call: grpc_1.ServerUnaryCall<dependency_1.google.protobuf.Empty, ListPoliciesRespose>, callback: grpc_1.sendUnaryData<ListPoliciesRespose>): void;
+        abstract ListPolicies(call: grpc_1.ServerUnaryCall<dependency_1.google.protobuf.Empty, ListPoliciesResponse>, callback: grpc_1.sendUnaryData<ListPoliciesResponse>): void;
         abstract ValidatePath(call: grpc_1.ServerUnaryCall<ValidatePathRequest, ValidatePathResponse>, callback: grpc_1.sendUnaryData<ValidatePathResponse>): void;
         abstract GetLatestPolicyTimestamp(call: grpc_1.ServerUnaryCall<dependency_1.google.protobuf.Empty, GetLatestPolicyTimestampResponse>, callback: grpc_1.sendUnaryData<GetLatestPolicyTimestampResponse>): void;
         abstract GetDefaultIssuer(call: grpc_1.ServerUnaryCall<dependency_1.google.protobuf.Empty, GetDefaultIssuerResponse>, callback: grpc_1.sendUnaryData<GetDefaultIssuerResponse>): void;
@@ -1274,7 +1274,7 @@ export namespace hoppipolla.policy {
         CreateIssuer: GrpcUnaryServiceInterface<CreateIssuerRequest, CreateIssuerResponse> = (message: CreateIssuerRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<CreateIssuerResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<CreateIssuerResponse>, callback?: grpc_1.requestCallback<CreateIssuerResponse>): grpc_1.ClientUnaryCall => {
             return super.CreateIssuer(message, metadata, options, callback);
         };
-        ListPolicies: GrpcUnaryServiceInterface<dependency_1.google.protobuf.Empty, ListPoliciesRespose> = (message: dependency_1.google.protobuf.Empty, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<ListPoliciesRespose>, options?: grpc_1.CallOptions | grpc_1.requestCallback<ListPoliciesRespose>, callback?: grpc_1.requestCallback<ListPoliciesRespose>): grpc_1.ClientUnaryCall => {
+        ListPolicies: GrpcUnaryServiceInterface<dependency_1.google.protobuf.Empty, ListPoliciesResponse> = (message: dependency_1.google.protobuf.Empty, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<ListPoliciesResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<ListPoliciesResponse>, callback?: grpc_1.requestCallback<ListPoliciesResponse>): grpc_1.ClientUnaryCall => {
             return super.ListPolicies(message, metadata, options, callback);
         };
         ValidatePath: GrpcUnaryServiceInterface<ValidatePathRequest, ValidatePathResponse> = (message: ValidatePathRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<ValidatePathResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<ValidatePathResponse>, callback?: grpc_1.requestCallback<ValidatePathResponse>): grpc_1.ClientUnaryCall => {

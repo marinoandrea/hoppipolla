@@ -16,10 +16,12 @@ async function main() {
     new PathAnalyzerGrpcService()
   );
 
+  const address = `${config.HOST}:${config.PORT}`;
+
   server.bindAsync(
-    `${config.HOST}:${config.PORT}`,
+    address,
     grpc.ServerCredentials.createInsecure(),
-    (err) => {
+    (err, port) => {
       if (err != null) {
         return console.error(err);
       }
@@ -28,7 +30,7 @@ async function main() {
       logger.info(`service | running`);
       logger.info(`node    | ${process.version}`);
       logger.info(`env     | ${config.NODE_ENV}`);
-      logger.info(`address | ${config.HOST}:${config.PORT}`);
+      logger.info(`address | ${config.HOST}:${port}`);
       logger.info(`startup | ${after - before}ms`);
     }
   );
