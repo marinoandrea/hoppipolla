@@ -44,7 +44,7 @@ def ping(
     """
     command = [
         "scion", "ping", address,
-        "-C", str(n_packets),
+        "-c", str(n_packets),
         "--sequence", sequence,
         "--sciond", sciond_address,
         "--timeout", f"{timeout_ms}ms"
