@@ -29,9 +29,15 @@ abstract class TypeOrmEntityRepository<
   public abstract mapModelToEntity(model: TModel): TEntity;
 
   public async add(entity: TEntity): Promise<void> {
-    await this.session.manager
+    this.session.manager
       .withRepository(this.repository)
-      .merge(this.mapEntityToModel(entity));
+      .save(this.mapEntityToModel(entity));
+  }
+
+  public async addAll(entities: TEntity[]): Promise<void> {
+    this.session.manager
+      .withRepository(this.repository)
+      .save(entities.map(this.mapEntityToModel));
   }
 
   public async getById(id: Identifier): Promise<TEntity | null> {
@@ -39,7 +45,7 @@ abstract class TypeOrmEntityRepository<
       .withRepository(this.repository)
       // @ts-expect-error TModel["id"] for some reason does not match the type
       // for Identifier
-      .findOne({ where: { id } });
+      .findOne({ where: { id }, loadEagerRelations: true });
 
     if (!model) {
       return null;

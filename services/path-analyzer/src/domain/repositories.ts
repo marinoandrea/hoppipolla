@@ -6,10 +6,15 @@ import { Entity, Identifier, IsdAs, Node, Path } from "./entities";
  */
 export interface IEntityRepository<TEntity extends Entity> {
   /**
-   * Add a new entity to the repository or modify the entity with the same identifier.
+   * Add/update entity to the repository or modify the entity with the same identifier.
    * @param entity The entity to create/update
    */
   add(entity: TEntity): Promise<void>;
+  /**
+   * Add/update all entities to the repository or modify the entity with the same identifier.
+   * @param entity The entity to create/update
+   */
+  addAll(entities: TEntity[]): Promise<void>;
   /**
    * Remove an entity from the repository.
    * @param entity The entity to create/update

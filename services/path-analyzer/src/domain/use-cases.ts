@@ -44,7 +44,7 @@ export async function getPathForAddress(
     })
   );
 
-  await Promise.all(newPaths.map(pathRepository.add));
+  await pathRepository.addAll(newPaths);
 
   return newPaths.find((path) => path.valid) ?? null;
 
