@@ -13,12 +13,13 @@ function execute<TRequest, TResponse>(
   func()
     .then((res) => {
       logger.info(`${call.getPath()} OK`);
+      logger.debug(res);
       callback(null, res);
     })
-    .catch((e) => {
+    .catch((err) => {
       logger.error(`${call.getPath()} ERROR`);
-      logger.debug(e);
-      callback(e, null);
+      logger.debug(err);
+      callback(err, null);
     });
 }
 
@@ -34,34 +35,29 @@ export class PathAnalyzerGrpcService extends hoppipollaPath.path
     execute(call, callback, async () => {
       const response = new hoppipollaPath.path.GetPathForAddrResponse();
 
-      try {
-        const output = await PathAnalyzerService.executeGetPathForAddress(
-          call.request.destination
-        );
+      const output = await PathAnalyzerService.executeGetPathForAddress(
+        call.request.destination
+      );
 
-        if (output) {
-          response.path = new hoppipollaPath.path.Path({
-            fingerprint: output.fingerprint,
-            dst_isd_as: output.dst,
-            src_isd_as: output.src,
-            sequence: output.sequence,
-            mtu: output.mtuBytes,
-            expiration: new googleTimestamp.protobuf.Timestamp({
-              seconds: output.expiresAt.getTime() / 1000,
-            }),
-            hops: output.hops.map(
-              (hop) =>
-                new hoppipollaPath.path.Hop({
-                  isd_as: hop.node.isdAs,
-                  inbound_interface: hop.inboundInterface,
-                  outbound_interface: hop.outboundInterface,
-                })
-            ),
-          });
-        }
-      } catch (e) {
-        console.error(e);
-        throw e;
+      if (output) {
+        response.path = new hoppipollaPath.path.Path({
+          fingerprint: output.fingerprint,
+          dst_isd_as: output.dst,
+          src_isd_as: output.src,
+          sequence: output.sequence,
+          mtu: output.mtuBytes,
+          expiration: new googleTimestamp.protobuf.Timestamp({
+            seconds: Math.round(output.expiresAt.getTime() / 1000),
+          }),
+          hops: output.hops.map(
+            (hop) =>
+              new hoppipollaPath.path.Hop({
+                isd_as: hop.node.isdAs,
+                inbound_interface: hop.inboundInterface,
+                outbound_interface: hop.outboundInterface,
+              })
+          ),
+        });
       }
 
       return response;
