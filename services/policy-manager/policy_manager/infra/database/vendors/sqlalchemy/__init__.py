@@ -8,7 +8,7 @@ engine = sqlalchemy.create_engine(config.database_uri, echo=False)
 
 
 def get_session():
-    return Session(engine)
+    return Session(engine, autoflush=False)
 
 
 BaseModel.metadata.create_all(engine)

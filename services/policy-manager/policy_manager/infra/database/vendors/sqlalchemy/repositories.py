@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from datetime import datetime
 from typing import Callable, Generic, Literal, Optional, TypeVar, cast
 
 from policy_manager.domain.entities import (Entity, Identifier, Issuer,
@@ -30,30 +31,24 @@ class SQLAlchemyRepository(
 ):
     def __init__(
         self,
+        session: Session,
         map_entity_to_model: Callable[[TEntity], TModel],
         map_model_to_entity: Callable[[TModel], TEntity],
-        session: Session,
-        identity_map: dict[
-            Identifier, Optional[TEntity] | RemovedPlaceholder] | None = None
     ) -> None:
         self.session = session
         self.map_entity_to_model = map_entity_to_model
         self.map_model_to_entity = map_model_to_entity
-        self._identity_map = {} if identity_map is None else identity_map
 
     @abstractmethod
     def get_query(self) -> Query[TModel]:
-        raise NotImplementedError()
+        ...
 
     def add(self, entity: TEntity):
-        self._identity_map[entity.id] = entity
         model = self.map_entity_to_model(entity)
-        self.session.add(model)
+        self.session.merge(model)
 
     def remove(self, entity: TEntity):
-        self._assert_not_removed(entity)
-        self._identity_map[entity.id] = REMOVED
-        model = self.get_query().get(entity.id)
+        model = self.map_entity_to_model(entity)
         self.session.delete(model)
 
     def get_by_id(self, id: Identifier) -> Optional[TEntity]:
@@ -61,60 +56,18 @@ class SQLAlchemyRepository(
         if model is None:
             return None
         # casting here is safe, sqlalchemy returns Any
-        return self._get_entity(cast(TModel, model))
-
-    def _assert_not_removed(self, entity: TEntity):
-        result = self._identity_map.get(entity.id, None)
-        assert result != REMOVED, f"Entity {entity.id} already removed"
-
-    def _get_entity(self, model: TModel) -> TEntity:
-        entity = self.map_model_to_entity(model)
-
-        self._assert_not_removed(entity)
-
-        if entity.id in self._identity_map:
-            # casting here is safe as we already checked for removal
-            return cast(TEntity, self._identity_map[entity.id])
-
-        self._identity_map[entity.id] = entity
-        return entity
-
-    def persist(self, entity: TEntity):
-        self._assert_not_removed(entity)
-
-        # sanity check
-        assert entity.id in self._identity_map, \
-            f"Entity {entity.id} not previously added to identity map"
-
-        model = self.map_entity_to_model(entity)
-
-        merged = self.session.merge(model)
-        self.session.add(merged)
-
-    def persist_all(self):
-        for entity in self._identity_map.values():
-            if entity is not None and entity != REMOVED:
-                self.persist(entity)
+        return self.map_model_to_entity(cast(TModel, model))
 
 
 class SQLAlchemyPolicyRepository(
     PolicyRepository,
     SQLAlchemyRepository[PolicyModel, Policy]
 ):
-    session: Session
-    _identity_map: dict[Identifier, Optional[Policy] | RemovedPlaceholder]
-
-    def __init__(
-        self,
-        session: Session,
-        identity_map: dict[
-            Identifier, Optional[Policy] | RemovedPlaceholder] = {}
-    ) -> None:
+    def __init__(self, session: Session) -> None:
         super().__init__(
-            map_policy_entity_to_model,
-            map_policy_model_to_entity,
             session,
-            identity_map
+            map_policy_entity_to_model,
+            map_policy_model_to_entity
         )
 
     def get_query(self) -> Query[PolicyModel]:
@@ -124,57 +77,52 @@ class SQLAlchemyPolicyRepository(
         results = self.get_query()\
             .filter_by(issuer_id=issuer_id)\
             .all()
-        return [self._get_entity(model) for model in results]
+        return [self.map_model_to_entity(model) for model in results]
 
     def get_all_active(self) -> list[Policy]:
         results = self.get_query()\
             .filter_by(active=True)\
             .all()
-        return [self._get_entity(model) for model in results]
+        return [self.map_model_to_entity(model) for model in results]
+
+    def get_max_created_at(self) -> datetime:
+        result = self.get_query()\
+            .filter_by(active=True)\
+            .order_by(PolicyModel.created_at.desc())\
+            .first()
+        return result.created_at if result is not None else datetime.now()
 
 
 class SQLAlchemyIssuerRepository(
     IssuerRepository,
     SQLAlchemyRepository[IssuerModel, Issuer]
 ):
-    session: Session
-    _identity_map: dict[Identifier, Optional[Issuer] | RemovedPlaceholder]
-
-    def __init__(
-        self,
-        session: Session,
-        identity_map: dict[
-            Identifier, Optional[Issuer] | RemovedPlaceholder] = {}
-    ) -> None:
+    def __init__(self, session: Session) -> None:
         super().__init__(
-            map_issuer_entity_to_model,
-            map_issuer_model_to_entity,
             session,
-            identity_map
+            map_issuer_entity_to_model,
+            map_issuer_model_to_entity
         )
 
     def get_query(self) -> Query[IssuerModel]:
         return self.session.query(IssuerModel)
+
+    def get_one_default(self) -> Issuer | None:
+        model = self.session.query(IssuerModel)\
+            .filter_by(default=True)\
+            .first()
+        return self.map_model_to_entity(model) if model is not None else None
 
 
 class SQLAlchemyMetaPolicyRepository(
     MetaPolicyRepository,
     SQLAlchemyRepository[MetaPolicyModel, MetaPolicy]
 ):
-    session: Session
-    _identity_map: dict[Identifier, Optional[MetaPolicy] | RemovedPlaceholder]
-
-    def __init__(
-        self,
-        session: Session,
-        identity_map: dict[
-            Identifier, Optional[MetaPolicy] | RemovedPlaceholder] = {}
-    ) -> None:
+    def __init__(self, session: Session) -> None:
         super().__init__(
-            map_meta_policy_entity_to_model,
-            map_meta_policy_model_to_entity,
             session,
-            identity_map
+            map_meta_policy_entity_to_model,
+            map_meta_policy_model_to_entity
         )
 
     def get_query(self) -> Query[MetaPolicyModel]:
@@ -182,4 +130,10 @@ class SQLAlchemyMetaPolicyRepository(
 
     def get_all_active(self) -> list[MetaPolicy]:
         results = self.get_query().all()
-        return [self._get_entity(model) for model in results]
+        return [self.map_model_to_entity(model) for model in results]
+
+    def get_max_created_at(self) -> datetime:
+        result = self.get_query()\
+            .order_by(MetaPolicyModel.created_at.desc())\
+            .first()
+        return result.created_at if result is not None else datetime.now()
