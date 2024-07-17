@@ -69,7 +69,8 @@ export class PathModel extends BaseModel {
   @Column({ default: false })
   valid!: boolean;
 
-  @ManyToMany(() => HopModel, (hop) => hop.paths)
+  @ManyToMany(() => HopModel, (hop) => hop.paths, { eager: true })
+  @JoinTable()
   hops!: HopModel[];
 }
 
@@ -84,7 +85,7 @@ export class HopModel {
   @PrimaryColumn()
   nodeId!: string;
 
-  @ManyToOne(() => NodeModel, (node) => node.hops)
+  @ManyToOne(() => NodeModel, (node) => node.hops, { eager: true })
   @JoinTable()
   node!: NodeModel;
 
