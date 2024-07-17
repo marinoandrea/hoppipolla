@@ -31,7 +31,7 @@ export function validateIsdAsSchema(address: string): address is IsdAs {
 
 const dateInThePastSchema = z
   .date()
-  .refine((d) => d < new Date(), { message: "date cannot be in the future" });
+  .refine((d) => d <= new Date(), { message: "date cannot be in the future" });
 
 const entityInputSchema = z
   .object({
