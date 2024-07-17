@@ -6,10 +6,9 @@ package hoppipolla.path;
 
 // SCION network hop in a path
 message Hop {
-  // ISD-AS address
   string isd_as = 1;
-  // inbound interface
-  string ifid = 2;
+  uint32 inbound_interface = 2;
+  uint32 outbound_interface = 3;
 }
 
 // SCION path between local source and destination
@@ -34,9 +33,9 @@ message Path {
  * installed policies */
 service PathAnalyzer {
   // Request a valid path given remote addr
-  rpc GetPathsForAddr(GetPathsForAddrRequest)
-      returns (GetPathsForAddrResponse) {}
+  rpc GetPathForAddr(GetPathForAddrRequest)
+      returns (GetPathForAddrResponse) {}
 }
 
-message GetPathsForAddrRequest { string destination = 1; }
-message GetPathsForAddrResponse { repeated Path paths = 1; }
+message GetPathForAddrRequest { string destination = 1; }
+message GetPathForAddrResponse { optional Path path = 1; }
