@@ -5,10 +5,13 @@ import { config } from "./config";
 import * as grpc from "@grpc/grpc-js";
 
 import { PathAnalyzerGrpcService } from "./grpc";
+import { AppDataSource } from "./infra/database/vendors/typeorm";
 import logger from "./logging";
 import { hoppipolla } from "./protos/path";
 
 async function main() {
+  await AppDataSource.initialize();
+
   const server = new grpc.Server();
 
   server.addService(

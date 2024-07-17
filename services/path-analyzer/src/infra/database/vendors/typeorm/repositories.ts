@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-
 import { Entity, Identifier, IsdAs, Node, Path } from "src/domain/entities";
 import {
   IEntityRepository,
@@ -8,28 +6,21 @@ import {
 } from "src/domain/repositories";
 
 import { AppDataSource } from ".";
-import { InMemoryStore, REMOVED_SYMBOL } from "../utils";
 import { BaseModel, NodeModel, PathModel } from "./models";
 
-import { Repository } from "typeorm";
+import { MoreThan, QueryRunner, Repository } from "typeorm";
 
-type Session = ReturnType<typeof AppDataSource.createQueryRunner>;
+type Session = QueryRunner;
 
 abstract class TypeOrmEntityRepository<
   TEntity extends Entity,
   TModel extends BaseModel,
 > implements IEntityRepository<TEntity>
 {
-  store: InMemoryStore<TEntity>;
   repository: Repository<TModel>;
   session: Session;
 
-  constructor(
-    session: Session,
-    repository: Repository<TModel>,
-    store: InMemoryStore<TEntity> = new Map()
-  ) {
-    this.store = store;
+  constructor(session: Session, repository: Repository<TModel>) {
     this.session = session;
     this.repository = repository;
   }
@@ -38,32 +29,12 @@ abstract class TypeOrmEntityRepository<
   public abstract mapModelToEntity(model: TModel): TEntity;
 
   public async add(entity: TEntity): Promise<void> {
-    const currentValue = this.store.get(entity.id);
-    assert.notEqual(
-      currentValue,
-      undefined,
-      `Entity ${entity} has already been added to the repository, modify the instance instead`
-    );
-    this.store.set(entity.id, entity);
     await this.session.manager
       .withRepository(this.repository)
-      .save(this.mapEntityToModel(entity));
+      .merge(this.mapEntityToModel(entity));
   }
 
   public async getById(id: Identifier): Promise<TEntity | null> {
-    const entityOrRemoved = this.store.get(id);
-
-    assert.notEqual(
-      entityOrRemoved,
-      REMOVED_SYMBOL,
-      `Entity with id ${id} has been removed from the repository, your handle is not valid`
-    );
-
-    const entity = entityOrRemoved as TEntity | undefined;
-    if (entity != null) {
-      return entity;
-    }
-
     const model = await this.session.manager
       .withRepository(this.repository)
       // @ts-expect-error TModel["id"] for some reason does not match the type
@@ -78,33 +49,9 @@ abstract class TypeOrmEntityRepository<
   }
 
   public async remove(entity: TEntity): Promise<void> {
-    this.assertNotRemoved(entity);
-    this.store.set(entity.id, REMOVED_SYMBOL);
     await this.session.manager
       .withRepository(this.repository)
       .remove(this.mapEntityToModel(entity));
-  }
-
-  private async persist(entity: TEntity): Promise<void> {
-    this.assertNotRemoved(entity);
-    const model = this.mapEntityToModel(entity);
-    await this.session.manager.withRepository(this.repository).save(model);
-  }
-
-  public async persistAll(): Promise<void> {
-    await Promise.all(
-      Array.from(this.store.values())
-        .filter((e) => !!e && e !== REMOVED_SYMBOL)
-        .map(this.persist)
-    );
-  }
-
-  private assertNotRemoved(entity: TEntity) {
-    assert.notEqual(
-      this.store.get(entity.id),
-      REMOVED_SYMBOL,
-      `Entity with ${entity} has been removed from the repository, your handle is not valid`
-    );
   }
 }
 
@@ -129,16 +76,16 @@ export class TypeOrmNodeRepository
     return new Node(model);
   }
 
-  public getByIsdAs(isdAs: IsdAs): Promise<Node | null> {
-    for (const value of this.store.values()) {
-      if (value === REMOVED_SYMBOL) {
-        continue;
-      }
-      if (value.isdAs === isdAs) {
-        return Promise.resolve(value);
-      }
+  public async getByIsdAs(isdAs: IsdAs): Promise<Node | null> {
+    const model = await this.session.manager
+      .withRepository(this.repository)
+      .findOne({ where: { isdAs } });
+
+    if (!model) {
+      return null;
     }
-    return Promise.resolve(null);
+
+    return this.mapModelToEntity(model);
   }
 }
 
@@ -179,36 +126,32 @@ export class TypeOrmPathRepository
     });
   }
 
-  public getByFingerprint(fingerprint: string): Promise<Path | null> {
-    for (const value of this.store.values()) {
-      if (value === REMOVED_SYMBOL) {
-        continue;
-      }
-      if (value.fingerprint === fingerprint) {
-        return Promise.resolve(value);
-      }
+  public async getByFingerprint(fingerprint: string): Promise<Path | null> {
+    const model = await this.session.manager
+      .withRepository(this.repository)
+      .findOne({ where: { fingerprint } });
+
+    if (!model) {
+      return null;
     }
-    return Promise.resolve(null);
+
+    return this.mapModelToEntity(model);
   }
 
-  public getValidPathsForDestination(
+  public async getValidPathsForDestination(
     dst: IsdAs,
     minValidationTimestamp: Date
   ): Promise<Path[]> {
-    const paths = [];
-    for (const value of this.store.values()) {
-      if (value === REMOVED_SYMBOL) {
-        continue;
-      }
-      if (
-        value.dst === dst &&
-        value.valid &&
-        value.lastValidatedAt &&
-        value.lastValidatedAt >= minValidationTimestamp
-      ) {
-        paths.push(value);
-      }
-    }
-    return Promise.resolve(paths);
+    const models = await this.session.manager
+      .withRepository(this.repository)
+      .find({
+        where: {
+          dst,
+          lastValidatedAt: MoreThan(minValidationTimestamp),
+          valid: true,
+        },
+      });
+
+    return models.map(this.mapModelToEntity);
   }
 }

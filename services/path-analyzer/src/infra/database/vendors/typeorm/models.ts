@@ -47,19 +47,23 @@ export class PathModel extends BaseModel {
   @Column()
   localIp!: string;
 
-  @Column("int64")
+  @Column("int")
   mtuBytes!: number;
 
   @Column()
   sequence!: string;
 
-  @Column({ type: "enum", enum: PathStatus, default: PathStatus.UNKNOWN })
+  @Column({
+    type: "simple-enum",
+    enum: PathStatus,
+    default: PathStatus.UNKNOWN,
+  })
   status!: PathStatus;
 
   @Column()
   expiresAt!: Date;
 
-  @Column({ nullable: true })
+  @Column({ type: "datetime", nullable: true })
   lastValidatedAt!: Date | null;
 
   @Column({ default: false })
@@ -71,11 +75,14 @@ export class PathModel extends BaseModel {
 
 @Entity({ name: "hops" })
 export class HopModel {
-  @Column({ default: 0 })
+  @PrimaryColumn({ default: 0 })
   inboundInterface!: number;
 
-  @Column({ default: 0 })
+  @PrimaryColumn({ default: 0 })
   outboundInterface!: number;
+
+  @PrimaryColumn()
+  nodeId!: string;
 
   @ManyToOne(() => NodeModel, (node) => node.hops)
   @JoinTable()

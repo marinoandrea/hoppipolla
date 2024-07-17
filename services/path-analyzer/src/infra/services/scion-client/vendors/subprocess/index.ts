@@ -26,7 +26,7 @@ export class ScionSubprocessClient implements IScionClient {
    */
   async showpaths(destination: string): Promise<ShowpathsPathResult[]> {
     const command = [
-      "showpaths",
+      "scion showpaths",
       "--format json",
       "--extended",
       `--sciond ${this.sciondAddress}`,
@@ -36,14 +36,21 @@ export class ScionSubprocessClient implements IScionClient {
 
     const { stdout } = await exec(command.join(" "));
     const json = JSON.parse(stdout);
-    const result = await showpathsOutputSchema.parseAsync(json);
+    const result = await showpathsOutputSchema.safeParseAsync(json);
+
+    console.log(result.error?.flatten());
+
+    // the result is missing paths if sciond does not find paths
+    if (!result.success) {
+      return [];
+    }
 
     // TODO: validate string addresses
-    return result.paths.map((path) => ({
+    return result.data.paths.map((path) => ({
       fingerprint: path.fingerprint,
       status: statusToEnum(path.status),
-      src: result.local_isd_as as IsdAs,
-      dst: result.destination as IsdAs,
+      src: result.data.local_isd_as as IsdAs,
+      dst: result.data.destination as IsdAs,
       localIp: path.local_ip as IpAddress,
       expiry: path.expiry,
       sequence: path.sequence,
@@ -72,7 +79,7 @@ export class ScionSubprocessClient implements IScionClient {
         const isdAs = path.hops[i].isd_as as IsdAs;
 
         // if this is the second instance of the ISD-AS, consider interface as outbound
-        if (i > 0 && hops[i - 1].isdAs == isdAs) {
+        if (i > 0 && hops[i - 1]?.isdAs == isdAs) {
           hops[i - 1].outboundInterface = hopInterface;
           continue;
         }
@@ -109,7 +116,7 @@ const showpathsOutputSchema = z.object({
       fingerprint: z.string(),
       hops: z.array(
         z.object({
-          ifid: z.string(),
+          ifid: z.number().int(),
           isd_as: z.string(),
         })
       ),
