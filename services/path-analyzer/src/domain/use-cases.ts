@@ -26,8 +26,9 @@ export async function getPathForAddress(
     latestPolicyTimestamp
   );
 
-  if (validPaths.length > 0) {
-    return validPaths[0];
+  const output = validPaths.find((p) => p.hops.length > 0);
+  if (output) {
+    return output;
   }
 
   // query SCION daemon for potential new paths to reach destination
