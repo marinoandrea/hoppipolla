@@ -7,7 +7,7 @@ import { HopModel, NodeModel, PathModel } from "./models";
 
 export const AppDataSource = new DataSource({
   type: "better-sqlite3",
-  database: config.SQLITE_URI,
+  database: config.DATABASE_URI,
   synchronize: true,
   logging: config.NODE_ENV === "development",
   entities: [PathModel, NodeModel, HopModel],
