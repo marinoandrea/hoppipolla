@@ -6,7 +6,7 @@ import {
 } from "src/domain/repositories";
 
 import { AppDataSource } from ".";
-import { BaseModel, NodeModel, PathModel } from "./models";
+import { BaseModel, HopModel, NodeModel, PathModel } from "./models";
 
 import { MoreThan, QueryRunner, Repository } from "typeorm";
 
@@ -113,11 +113,25 @@ export class TypeOrmPathRepository
     model.src = entity.src;
     model.dst = entity.dst;
     model.localIp = entity.localIp;
-    model.sequence = entity.sequence;
     model.mtuBytes = entity.mtuBytes;
     model.expiresAt = entity.expiresAt;
     model.lastValidatedAt = entity.lastValidatedAt;
     model.valid = entity.valid;
+    model.hops = entity.hops.map((h) => {
+      const hModel = new HopModel();
+
+      hModel.node = new NodeModel();
+      hModel.node.id = h.node.id;
+      hModel.node.createdAt = h.node.createdAt;
+      hModel.node.updatedAt = h.node.updatedAt;
+      hModel.node.isdAs = h.node.isdAs;
+
+      hModel.inboundInterface = h.inboundInterface;
+      hModel.outboundInterface = h.outboundInterface;
+
+      return hModel;
+    });
+
     return model;
   }
 

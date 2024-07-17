@@ -50,9 +50,6 @@ export class PathModel extends BaseModel {
   @Column("int")
   mtuBytes!: number;
 
-  @Column()
-  sequence!: string;
-
   @Column({
     type: "simple-enum",
     enum: PathStatus,
@@ -69,7 +66,10 @@ export class PathModel extends BaseModel {
   @Column({ default: false })
   valid!: boolean;
 
-  @ManyToMany(() => HopModel, (hop) => hop.paths, { eager: true })
+  @ManyToMany(() => HopModel, (hop) => hop.paths, {
+    eager: true,
+    cascade: true,
+  })
   @JoinTable()
   hops!: HopModel[];
 }
