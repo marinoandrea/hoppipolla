@@ -42,7 +42,7 @@ def main():
     startup_duration_ms = (after_startup_time - before_startup_time).total_seconds() * 1000
 
     logging.info("service | running")
-    logging.info(f"python  | {sys.version.split(" ")[0]}")
+    logging.info(f"python  | {sys.version.split(' ')[0]}")
     logging.info(f"env     | {config.env}")
     logging.info(f"address | {address}")
     logging.info(f"startup | {startup_duration_ms}ms")
