@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 GENERATED_PATH=./src/protos
 
