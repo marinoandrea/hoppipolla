@@ -5,6 +5,23 @@ import { google as googleTimestamp } from "./protos/google/protobuf/timestamp";
 import { hoppipolla as hoppipollaPath } from "./protos/path";
 import { PathAnalyzerService } from "./service";
 
+function execute<TRequest, TResponse>(
+  call: ServerUnaryCall<TRequest, TResponse>,
+  callback: sendUnaryData<TResponse>,
+  func: () => Promise<TResponse>
+) {
+  func()
+    .then((res) => {
+      logger.info(`${call.getPath()} OK`);
+      callback(null, res);
+    })
+    .catch((e) => {
+      logger.error(`${call.getPath()} ERROR`);
+      logger.debug(e);
+      callback(e, null);
+    });
+}
+
 export class PathAnalyzerGrpcService extends hoppipollaPath.path
   .UnimplementedPathAnalyzerService {
   GetPathForAddr(
@@ -14,11 +31,7 @@ export class PathAnalyzerGrpcService extends hoppipollaPath.path
     >,
     callback: sendUnaryData<hoppipollaPath.path.GetPathForAddrResponse>
   ): void {
-    execute()
-      .then((res) => callback(null, res))
-      .catch(logger.error);
-
-    async function execute() {
+    execute(call, callback, async () => {
       const response = new hoppipollaPath.path.GetPathForAddrResponse();
 
       try {
@@ -52,6 +65,6 @@ export class PathAnalyzerGrpcService extends hoppipollaPath.path
       }
 
       return response;
-    }
+    });
   }
 }
