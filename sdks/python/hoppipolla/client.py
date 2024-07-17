@@ -14,14 +14,19 @@ class HoppipollaClientConfig:
     Configuration object for the `HoppipollaClient`. It contains information
     to initialize connections to the services in the stack.
     """
-    path_analyzer = ConnectionConfig("localhost:9001")
+    path_analyzer = ConnectionConfig("127.0.0.1:27001")
     """
-    Address and port of the path analyzer service.
+    Connection configuration for the path analyzer service.
     """
 
-    policy_manager = ConnectionConfig("localhost:9002")
+    policy_manager = ConnectionConfig("127.0.0.1:27002")
     """
-    Address and port of the policy manager service.
+    Connection configuration for the policy manager service.
+    """
+
+    sciond = ConnectionConfig("127.0.0.1:30255")
+    """
+    Connection configuration for the SCION daemon service.
     """
 
     logger = LoggingConfig()
@@ -187,11 +192,19 @@ class HoppipollaClient:
             be not successful if there was no viable path to use, otherwise this
             method raises an error.
         """
-        valid_path = self.path_analyzer.get_path_for_address(address)
+        isd_as = address.split(",")[0]
+
+        valid_path = self.path_analyzer.get_path_for_address(isd_as)
 
         if valid_path is None:
             return PingResult(success=False, path=None)
 
-        success = scion.ping(address, valid_path.sequence, n_packets)
+        success = scion.ping(
+            address,
+            valid_path.sequence,
+            n_packets,
+            sciond_address=self.config.sciond.base_url,
+            timeout_ms=self.config.sciond.timeout_ms
+        )
 
         return PingResult(success=success, path=valid_path)

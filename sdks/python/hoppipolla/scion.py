@@ -3,7 +3,13 @@ import subprocess
 from .errors import HoppipollaScionError
 
 
-def ping(address: str, sequence: str, n_packets: int) -> bool:
+def ping(
+    address: str,
+    sequence: str,
+    n_packets: int,
+    sciond_address: str = "127.0.0.1:30255",
+    timeout_ms: int = 5000
+) -> bool:
     """
     Test connectivity to a remote SCION host using SCMP echo packets
 
@@ -20,6 +26,12 @@ def ping(address: str, sequence: str, n_packets: int) -> bool:
     n_packets: `int`
         Number of SCMP echo packets to send (defaults to 1)
 
+    sciond_address: `str`
+        Address for the SCION daemon service (defaults to "127.0.0.1:30255")
+
+    timeout_ms: `int`
+        Timeout for the ping request expressed in milliseconds.
+
     Raises
     ------
     `HoppipollaScionError`
@@ -31,7 +43,12 @@ def ping(address: str, sequence: str, n_packets: int) -> bool:
         Whether the ping was successful
     """
     executable = "scion ping"
-    options = f"-C {n_packets} --sequence {sequence}"
+    options = " ".join([
+        f"-C {n_packets}",
+        f"--sequence {sequence}",
+        f"--sciond {sciond_address}",
+        f"--timeout {timeout_ms}ms"
+    ])
     command = f"{executable} {address} {options}"
 
     process = subprocess.run(command)
