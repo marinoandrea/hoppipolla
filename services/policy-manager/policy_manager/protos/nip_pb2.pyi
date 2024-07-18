@@ -7,53 +7,39 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class HopData(_message.Message):
-    __slots__ = ("isd_as", "total_energy_consumption", "peak_energy_consumption", "off_peak_energy_consumption", "energy_consumption_per_hour", "renewable_energy_consumption", "non_renewable_energy_consumption", "co2_emissions", "renewable_energy_percentage", "uptime", "downtime", "maintenance_frequency", "energy_efficiency_rating", "sustainability_index", "carbon_footprint_reduction", "last_maintenance_date", "data_collected_date", "location")
+class EnergyReading(_message.Message):
+    __slots__ = ("id", "isd_as", "machine_id", "collected_at", "energy_consumption_kWh", "cpu_usage_percentage", "memory_usage_percentage", "network_traffic_MB", "temperature_celsius", "power_source", "status", "carbon_emissions_kg", "renewable_energy_percentage", "energy_efficiency_rating")
+    ID_FIELD_NUMBER: _ClassVar[int]
     ISD_AS_FIELD_NUMBER: _ClassVar[int]
-    TOTAL_ENERGY_CONSUMPTION_FIELD_NUMBER: _ClassVar[int]
-    PEAK_ENERGY_CONSUMPTION_FIELD_NUMBER: _ClassVar[int]
-    OFF_PEAK_ENERGY_CONSUMPTION_FIELD_NUMBER: _ClassVar[int]
-    ENERGY_CONSUMPTION_PER_HOUR_FIELD_NUMBER: _ClassVar[int]
-    RENEWABLE_ENERGY_CONSUMPTION_FIELD_NUMBER: _ClassVar[int]
-    NON_RENEWABLE_ENERGY_CONSUMPTION_FIELD_NUMBER: _ClassVar[int]
-    CO2_EMISSIONS_FIELD_NUMBER: _ClassVar[int]
+    MACHINE_ID_FIELD_NUMBER: _ClassVar[int]
+    COLLECTED_AT_FIELD_NUMBER: _ClassVar[int]
+    ENERGY_CONSUMPTION_KWH_FIELD_NUMBER: _ClassVar[int]
+    CPU_USAGE_PERCENTAGE_FIELD_NUMBER: _ClassVar[int]
+    MEMORY_USAGE_PERCENTAGE_FIELD_NUMBER: _ClassVar[int]
+    NETWORK_TRAFFIC_MB_FIELD_NUMBER: _ClassVar[int]
+    TEMPERATURE_CELSIUS_FIELD_NUMBER: _ClassVar[int]
+    POWER_SOURCE_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    CARBON_EMISSIONS_KG_FIELD_NUMBER: _ClassVar[int]
     RENEWABLE_ENERGY_PERCENTAGE_FIELD_NUMBER: _ClassVar[int]
-    UPTIME_FIELD_NUMBER: _ClassVar[int]
-    DOWNTIME_FIELD_NUMBER: _ClassVar[int]
-    MAINTENANCE_FREQUENCY_FIELD_NUMBER: _ClassVar[int]
     ENERGY_EFFICIENCY_RATING_FIELD_NUMBER: _ClassVar[int]
-    SUSTAINABILITY_INDEX_FIELD_NUMBER: _ClassVar[int]
-    CARBON_FOOTPRINT_REDUCTION_FIELD_NUMBER: _ClassVar[int]
-    LAST_MAINTENANCE_DATE_FIELD_NUMBER: _ClassVar[int]
-    DATA_COLLECTED_DATE_FIELD_NUMBER: _ClassVar[int]
-    LOCATION_FIELD_NUMBER: _ClassVar[int]
+    id: str
     isd_as: str
-    total_energy_consumption: float
-    peak_energy_consumption: float
-    off_peak_energy_consumption: float
-    energy_consumption_per_hour: float
-    renewable_energy_consumption: float
-    non_renewable_energy_consumption: float
-    co2_emissions: float
+    machine_id: str
+    collected_at: _timestamp_pb2.Timestamp
+    energy_consumption_kWh: float
+    cpu_usage_percentage: float
+    memory_usage_percentage: float
+    network_traffic_MB: float
+    temperature_celsius: float
+    power_source: str
+    status: str
+    carbon_emissions_kg: float
     renewable_energy_percentage: float
-    uptime: float
-    downtime: float
-    maintenance_frequency: float
-    energy_efficiency_rating: float
-    sustainability_index: float
-    carbon_footprint_reduction: float
-    last_maintenance_date: _timestamp_pb2.Timestamp
-    data_collected_date: _timestamp_pb2.Timestamp
-    location: str
-    def __init__(self, isd_as: _Optional[str] = ..., total_energy_consumption: _Optional[float] = ..., peak_energy_consumption: _Optional[float] = ..., off_peak_energy_consumption: _Optional[float] = ..., energy_consumption_per_hour: _Optional[float] = ..., renewable_energy_consumption: _Optional[float] = ..., non_renewable_energy_consumption: _Optional[float] = ..., co2_emissions: _Optional[float] = ..., renewable_energy_percentage: _Optional[float] = ..., uptime: _Optional[float] = ..., downtime: _Optional[float] = ..., maintenance_frequency: _Optional[float] = ..., energy_efficiency_rating: _Optional[float] = ..., sustainability_index: _Optional[float] = ..., carbon_footprint_reduction: _Optional[float] = ..., last_maintenance_date: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., data_collected_date: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., location: _Optional[str] = ...) -> None: ...
+    energy_efficiency_rating: str
+    def __init__(self, id: _Optional[str] = ..., isd_as: _Optional[str] = ..., machine_id: _Optional[str] = ..., collected_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., energy_consumption_kWh: _Optional[float] = ..., cpu_usage_percentage: _Optional[float] = ..., memory_usage_percentage: _Optional[float] = ..., network_traffic_MB: _Optional[float] = ..., temperature_celsius: _Optional[float] = ..., power_source: _Optional[str] = ..., status: _Optional[str] = ..., carbon_emissions_kg: _Optional[float] = ..., renewable_energy_percentage: _Optional[float] = ..., energy_efficiency_rating: _Optional[str] = ...) -> None: ...
 
-class GetLatestHopDataRequest(_message.Message):
-    __slots__ = ("isd_as",)
-    ISD_AS_FIELD_NUMBER: _ClassVar[int]
-    isd_as: str
-    def __init__(self, isd_as: _Optional[str] = ...) -> None: ...
-
-class GetAggregatedHopDataRequest(_message.Message):
+class GetEnergyReadingsRequest(_message.Message):
     __slots__ = ("isd_as", "interval")
     ISD_AS_FIELD_NUMBER: _ClassVar[int]
     INTERVAL_FIELD_NUMBER: _ClassVar[int]
@@ -61,16 +47,8 @@ class GetAggregatedHopDataRequest(_message.Message):
     interval: _common_pb2.Interval
     def __init__(self, isd_as: _Optional[str] = ..., interval: _Optional[_Union[_common_pb2.Interval, _Mapping]] = ...) -> None: ...
 
-class GetHopDataForIntervalRequest(_message.Message):
-    __slots__ = ("isd_as", "interval")
-    ISD_AS_FIELD_NUMBER: _ClassVar[int]
-    INTERVAL_FIELD_NUMBER: _ClassVar[int]
-    isd_as: str
-    interval: _common_pb2.Interval
-    def __init__(self, isd_as: _Optional[str] = ..., interval: _Optional[_Union[_common_pb2.Interval, _Mapping]] = ...) -> None: ...
-
-class GetHopDataForIntervalResponse(_message.Message):
+class GetEnergyReadingsResponse(_message.Message):
     __slots__ = ("data",)
     DATA_FIELD_NUMBER: _ClassVar[int]
-    data: _containers.RepeatedCompositeFieldContainer[HopData]
-    def __init__(self, data: _Optional[_Iterable[_Union[HopData, _Mapping]]] = ...) -> None: ...
+    data: _containers.RepeatedCompositeFieldContainer[EnergyReading]
+    def __init__(self, data: _Optional[_Iterable[_Union[EnergyReading, _Mapping]]] = ...) -> None: ...

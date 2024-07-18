@@ -39,39 +39,17 @@ class NipProxyStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.GetLatestHopData = channel.unary_unary(
-                '/hoppipolla.nip.NipProxy/GetLatestHopData',
-                request_serializer=nip__pb2.GetLatestHopDataRequest.SerializeToString,
-                response_deserializer=nip__pb2.HopData.FromString,
-                _registered_method=True)
-        self.GetHopDataForInterval = channel.unary_unary(
-                '/hoppipolla.nip.NipProxy/GetHopDataForInterval',
-                request_serializer=nip__pb2.GetHopDataForIntervalRequest.SerializeToString,
-                response_deserializer=nip__pb2.GetHopDataForIntervalResponse.FromString,
-                _registered_method=True)
-        self.GetAggregatedHopData = channel.unary_unary(
-                '/hoppipolla.nip.NipProxy/GetAggregatedHopData',
-                request_serializer=nip__pb2.GetLatestHopDataRequest.SerializeToString,
-                response_deserializer=nip__pb2.HopData.FromString,
+        self.GetEnergyReadings = channel.unary_unary(
+                '/hoppipolla.nip.NipProxy/GetEnergyReadings',
+                request_serializer=nip__pb2.GetEnergyReadingsRequest.SerializeToString,
+                response_deserializer=nip__pb2.GetEnergyReadingsResponse.FromString,
                 _registered_method=True)
 
 
 class NipProxyServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def GetLatestHopData(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetHopDataForInterval(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetAggregatedHopData(self, request, context):
+    def GetEnergyReadings(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -80,20 +58,10 @@ class NipProxyServicer(object):
 
 def add_NipProxyServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'GetLatestHopData': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetLatestHopData,
-                    request_deserializer=nip__pb2.GetLatestHopDataRequest.FromString,
-                    response_serializer=nip__pb2.HopData.SerializeToString,
-            ),
-            'GetHopDataForInterval': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetHopDataForInterval,
-                    request_deserializer=nip__pb2.GetHopDataForIntervalRequest.FromString,
-                    response_serializer=nip__pb2.GetHopDataForIntervalResponse.SerializeToString,
-            ),
-            'GetAggregatedHopData': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetAggregatedHopData,
-                    request_deserializer=nip__pb2.GetLatestHopDataRequest.FromString,
-                    response_serializer=nip__pb2.HopData.SerializeToString,
+            'GetEnergyReadings': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetEnergyReadings,
+                    request_deserializer=nip__pb2.GetEnergyReadingsRequest.FromString,
+                    response_serializer=nip__pb2.GetEnergyReadingsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -107,7 +75,7 @@ class NipProxy(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def GetLatestHopData(request,
+    def GetEnergyReadings(request,
             target,
             options=(),
             channel_credentials=None,
@@ -120,63 +88,9 @@ class NipProxy(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/hoppipolla.nip.NipProxy/GetLatestHopData',
-            nip__pb2.GetLatestHopDataRequest.SerializeToString,
-            nip__pb2.HopData.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetHopDataForInterval(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/hoppipolla.nip.NipProxy/GetHopDataForInterval',
-            nip__pb2.GetHopDataForIntervalRequest.SerializeToString,
-            nip__pb2.GetHopDataForIntervalResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetAggregatedHopData(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/hoppipolla.nip.NipProxy/GetAggregatedHopData',
-            nip__pb2.GetLatestHopDataRequest.SerializeToString,
-            nip__pb2.HopData.FromString,
+            '/hoppipolla.nip.NipProxy/GetEnergyReadings',
+            nip__pb2.GetEnergyReadingsRequest.SerializeToString,
+            nip__pb2.GetEnergyReadingsResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -5,47 +5,32 @@ import "common.proto";
 
 package hoppipolla.nip;
 
-message HopData {
-  string isd_as = 1;
-  float total_energy_consumption = 2;
-  float peak_energy_consumption = 3;
-  float off_peak_energy_consumption = 4;
-  float energy_consumption_per_hour = 5;
-  float renewable_energy_consumption = 6;
-  float non_renewable_energy_consumption = 7;
-  float co2_emissions = 8;
-  float renewable_energy_percentage = 9;
-  float uptime = 10;
-  float downtime = 11;
-  float maintenance_frequency = 12;
-  float energy_efficiency_rating = 13;
-  float sustainability_index = 14;
-  float carbon_footprint_reduction = 15;
-  google.protobuf.Timestamp last_maintenance_date = 16;
-  google.protobuf.Timestamp data_collected_date = 17;
-  string location = 18;
+message EnergyReading {
+  string id = 1;
+  string isd_as = 2;
+  string machine_id = 3;
+  google.protobuf.Timestamp collected_at = 4;
+  float energy_consumption_kWh = 5;
+  float cpu_usage_percentage = 6;
+  float memory_usage_percentage =7;
+  float network_traffic_MB = 8;
+  float temperature_celsius = 9;
+  string power_source = 10;
+  string status = 11;
+  float carbon_emissions_kg = 12;
+  float renewable_energy_percentage = 13;
+  string energy_efficiency_rating = 14;
 }
 
 service NipProxy {
-  rpc GetLatestHopData(GetLatestHopDataRequest)
-      returns (HopData) {}
-  rpc GetHopDataForInterval(GetHopDataForIntervalRequest)
-      returns (GetHopDataForIntervalResponse) {}
-  rpc GetAggregatedHopData(GetLatestHopDataRequest)
-      returns (HopData) {}
+  rpc GetEnergyReadings(GetEnergyReadingsRequest)
+      returns (GetEnergyReadingsResponse) {}
 }
 
-message GetLatestHopDataRequest { string isd_as = 1; }
-
-message GetAggregatedHopDataRequest {
+message GetEnergyReadingsRequest {
   string isd_as = 1;
   hoppipolla.common.Interval interval = 2;
 }
-
-message GetHopDataForIntervalRequest {
-  string isd_as = 1;
-  hoppipolla.common.Interval interval = 2;
-}
-message GetHopDataForIntervalResponse {
-  repeated HopData data = 1;
+message GetEnergyReadingsResponse {
+  repeated EnergyReading data = 1;
 }

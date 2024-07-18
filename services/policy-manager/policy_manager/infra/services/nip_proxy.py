@@ -7,8 +7,8 @@ from policy_manager.config import config
 from policy_manager.domain.entities import Hop, HopReading, TimeInterval
 from policy_manager.domain.services import NipProxy
 from policy_manager.protos.common_pb2 import Interval
-from policy_manager.protos.nip_pb2 import (GetHopDataForIntervalRequest,
-                                           GetHopDataForIntervalResponse)
+from policy_manager.protos.nip_pb2 import (GetEnergyReadingsRequest,
+                                           GetEnergyReadingsResponse)
 from policy_manager.protos.nip_pb2_grpc import NipProxyStub
 
 T = TypeVar('T')
@@ -41,12 +41,12 @@ class NipProxyGRPCService(NipProxy):
         end_time = Timestamp()
         end_time.FromDatetime(interval.datetime_end)
 
-        req = GetHopDataForIntervalRequest(
+        req = GetEnergyReadingsRequest(
             isd_as=hop.isd_as,
             interval=Interval(start_time, end_time)
         )
 
-        res = cast(GetHopDataForIntervalResponse,
-                   self.client.GetHopDataForInterval(req))
+        res = cast(GetEnergyReadingsResponse,
+                   self.client.GetEnergyReadings(req))
 
         return [MessageToDict(entry) for entry in res.data]
