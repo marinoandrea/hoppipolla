@@ -1,4 +1,5 @@
 from abc import ABCMeta
+from datetime import datetime
 from typing import Generic, Literal, Optional, TypeVar, cast
 
 from policy_manager.domain.entities import (Entity, Identifier, Issuer,
@@ -22,7 +23,8 @@ class InMemoryRepository(
 ):
     def __init__(
         self,
-        store: dict[Identifier, Optional[TEntity] | RemovedPlaceholder] | None = None
+        store: dict[Identifier, Optional[TEntity]
+                    | RemovedPlaceholder] | None = None
     ) -> None:
         self.store = {} if store is None else store
 
@@ -34,7 +36,7 @@ class InMemoryRepository(
         self.store[entity.id] = REMOVED
 
     def get_by_id(self, id: Identifier) -> Optional[TEntity]:
-        entity = self.store[id]
+        entity = self.store.get(id, None)
         assert entity != REMOVED, f"Entity {id} already removed"
         return entity
 
@@ -77,12 +79,23 @@ class InMemoryPolicyRepository(
             out.append(policy)
         return out
 
+    def get_max_created_at(self) -> datetime:
+        max_created_at = datetime.fromtimestamp(0)
+        for policy in self.store.values():
+            if policy is None or policy == REMOVED:
+                continue
+            max_created_at = max(max_created_at, policy.created_at)
+        return max_created_at
+
 
 class InMemoryIssuerRepository(
     IssuerRepository,
     InMemoryRepository[Issuer]
 ):
-    pass
+    default_issuer = Issuer(name='default')
+
+    def get_one_default(self) -> Issuer | None:
+        return self.default_issuer
 
 
 class InMemoryMetaPolicyRepository(
@@ -97,3 +110,11 @@ class InMemoryMetaPolicyRepository(
             policy = cast(MetaPolicy, stored)
             out.append(policy)
         return out
+
+    def get_max_created_at(self) -> datetime:
+        max_created_at = datetime.fromtimestamp(0)
+        for policy in self.store.values():
+            if policy is None or policy == REMOVED:
+                continue
+            max_created_at = max(max_created_at, policy.created_at)
+        return max_created_at
