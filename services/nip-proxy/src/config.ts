@@ -7,11 +7,7 @@ export const config = z
       .default("development"),
     HOST: z.string().default("127.0.0.1"),
     PORT: z.coerce.number().default(27_001),
-    SCIOND_URI: z.string().default("127.0.0.1:30255"),
-    DATABASE_URI: z.string().default("sqlite.db"),
-    POLICY_MANAGER_URI: z.string().default("localhost:27002"),
     LOG_LEVEL: z.enum(["info", "error", "debug", "warning"]).default("debug"),
-    MAX_PATHS_BATCH: z.coerce.number().int().gt(0).default(10),
     ENERGY_READING_MOCKFILE: z.string().default("mocks/energy-readings.json"),
   })
   .parse(process.env);
