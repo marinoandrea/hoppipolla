@@ -1,5 +1,5 @@
 import { config } from "./config";
-import { ReadingCollectionQuery } from "./domain/repositories";
+import { ReadingCollectionQuery } from "./domain/entities";
 import { queryAndUpdateRepository } from "./domain/use-cases";
 import { redisClient } from "./infra/repositories/redis";
 import { RedisEnergyReadingRepository } from "./infra/repositories/redis/repositories";

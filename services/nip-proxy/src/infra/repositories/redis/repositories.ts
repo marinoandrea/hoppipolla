@@ -4,12 +4,10 @@ import {
   DataReading,
   EnergyReading,
   IsdAs,
+  ReadingCollectionQuery,
   validateEnergyReading,
 } from "src/domain/entities";
-import {
-  IReadingCollectionRepository,
-  ReadingCollectionQuery,
-} from "src/domain/repositories";
+import { IReadingCollectionRepository } from "src/domain/repositories";
 
 import { RedisClient } from ".";
 import { energyReadingSchema } from "./schema";
