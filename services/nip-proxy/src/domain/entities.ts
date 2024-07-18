@@ -1,31 +1,5 @@
 import { z } from "zod";
-import { EntityValidationError, InternalError } from "./errors";
-
-function handleZodValidation<TReading>(
-  entity: string,
-  parse: (data: unknown) => TReading
-) {
-  return (data: unknown) => {
-    try {
-      return parse(data);
-    } catch (e) {
-      if (!(e instanceof z.ZodError)) {
-        throw e;
-      }
-
-      const issue = e.issues.pop();
-      if (!issue) {
-        throw new InternalError(`Validation failed for unknown reasons: ${e}`);
-      }
-
-      throw new EntityValidationError(
-        entity,
-        issue.path.join("/"),
-        issue.message
-      );
-    }
-  };
-}
+import { handleZodValidation } from "./errors";
 
 /** A unique identifier for the domain entities. */
 export type Identifier = string;
@@ -57,7 +31,7 @@ export type ReadingCollectionQuery = z.infer<
 
 export const validateReadingCollectionQuery = handleZodValidation(
   "ReadingCollectionQuery",
-  readingCollectionQuerySchema.parse
+  readingCollectionQuerySchema
 );
 
 const dataReadingSchema = z.object({
@@ -157,5 +131,5 @@ export type EnergyReading = z.infer<typeof energyReadingSchema>;
 
 export const validateEnergyReading = handleZodValidation(
   "EnergyReading",
-  energyReadingSchema.parse
+  energyReadingSchema
 );
