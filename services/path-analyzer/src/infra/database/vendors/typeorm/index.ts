@@ -9,7 +9,7 @@ export const AppDataSource = new DataSource({
   type: "better-sqlite3",
   database: config.DATABASE_URI,
   synchronize: true,
-  logging: config.NODE_ENV === "development",
+  logging: false,
   entities: [PathModel, NodeModel, HopModel],
   subscribers: [],
   migrations: [],

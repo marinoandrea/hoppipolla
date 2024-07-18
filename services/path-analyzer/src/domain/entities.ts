@@ -1,7 +1,7 @@
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 
-import { EntityValidationError } from "./errors";
+import { EntityValidationError, handleZodValidation } from "./errors";
 
 /** A unique identifier for the domain entities. */
 export type Identifier = string;
@@ -25,9 +25,7 @@ const isdAsSchema = z
     "invalid ISD-AS tuple"
   );
 
-export function validateIsdAsSchema(address: string): address is IsdAs {
-  return isdAsSchema.safeParse(address).success;
-}
+export const validateIsdAs = handleZodValidation("isdAs", isdAsSchema);
 
 const dateInThePastSchema = z
   .date()
@@ -44,6 +42,8 @@ const entityInputSchema = z
     path: ["createdAt"],
   });
 
+const validateEntity = handleZodValidation("Entity", entityInputSchema);
+
 type EntityInput = typeof entityInputSchema._input;
 
 /** Represents an abstract entity in the domain. */
@@ -53,13 +53,10 @@ export abstract class Entity {
   private _updatedAt: Date;
 
   constructor(data: EntityInput) {
-    const validationResult = entityInputSchema.safeParse(data);
-    if (!validationResult.success) {
-      throw new EntityValidationError(validationResult.error.message);
-    }
-    this._id = validationResult.data.id;
-    this._createdAt = validationResult.data.createdAt;
-    this._updatedAt = validationResult.data.updatedAt;
+    const validationResult = validateEntity(data);
+    this._id = validationResult.id;
+    this._createdAt = validationResult.createdAt;
+    this._updatedAt = validationResult.updatedAt;
   }
 
   /** Unique identifier for the entity */
@@ -80,15 +77,25 @@ export abstract class Entity {
   public set updatedAt(value: Date) {
     const now = new Date();
     if (value < this._createdAt) {
-      throw new EntityValidationError("updatedAt cannot be before createdAt");
+      throw new EntityValidationError(
+        "Entity",
+        "updatedAt",
+        "updatedAt cannot be before createdAt"
+      );
     } else if (value > now) {
-      throw new EntityValidationError("updatedAt cannot be in the future");
+      throw new EntityValidationError(
+        "Entity",
+        "updatedAt",
+        "updatedAt cannot be in the future"
+      );
     }
     this._updatedAt = value;
   }
 }
 
 const nodeInputSchema = z.object({ isdAs: isdAsSchema });
+
+export const validateNodeInput = handleZodValidation("Node", nodeInputSchema);
 
 type NodeInput = EntityInput & typeof nodeInputSchema._input;
 
@@ -98,12 +105,7 @@ export class Node extends Entity {
 
   constructor(data: NodeInput) {
     super(data);
-
-    const validationResult = nodeInputSchema.safeParse(data);
-    if (!validationResult.success) {
-      throw new EntityValidationError(validationResult.error.message);
-    }
-
+    const validationResult = validateNodeInput(data);
     this._isdAs = validationResult.data.isdAs as IsdAs;
   }
 
@@ -147,6 +149,8 @@ const pathInputSchema = z.object({
   ),
 });
 
+export const validatePathInput = handleZodValidation("Path", pathInputSchema);
+
 type PathInput = EntityInput & typeof pathInputSchema._input;
 
 /** Path in the SCION network between source ISD-AS and destination ISD-AS. */
@@ -165,10 +169,7 @@ export class Path extends Entity {
   constructor(data: PathInput) {
     super(data);
 
-    const validationResult = pathInputSchema.safeParse(data);
-    if (!validationResult.success) {
-      throw new EntityValidationError(validationResult.error.message);
-    }
+    const validationResult = validatePathInput(data);
 
     this._fingerprint = validationResult.data.fingerprint;
     this._src = validationResult.data.src as IsdAs;
@@ -252,10 +253,14 @@ export class Path extends Entity {
     const now = new Date();
     if (value < this.createdAt) {
       throw new EntityValidationError(
+        "Path",
+        "lastValidatedAt",
         "lastValidatedAt cannot be before createdAt"
       );
     } else if (value > now) {
       throw new EntityValidationError(
+        "Path",
+        "lastValidatedAt",
         "lastValidatedAt cannot be in the future"
       );
     }
@@ -273,6 +278,8 @@ export class Path extends Entity {
   public set valid(value: boolean) {
     if (value && !this._lastValidatedAt) {
       throw new EntityValidationError(
+        "Path",
+        "valid",
         "cannot set a path to valid without a validation timestamp"
       );
     }

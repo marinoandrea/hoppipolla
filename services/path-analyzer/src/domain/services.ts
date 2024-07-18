@@ -32,5 +32,10 @@ export type ShowpathsPathResult = {
 };
 
 export interface IScionClient {
+  /**
+   * Returns an object containing SCION paths for given destination.
+   * @param destination ISD-AS tuple
+   * @returns Paths information
+   */
   showpaths(dst: IsdAs): Promise<ShowpathsPathResult[]>;
 }

@@ -1,4 +1,4 @@
-import { Hop, Node, Path, validateIsdAsSchema } from "./entities";
+import { Hop, Node, Path, validateIsdAs } from "./entities";
 import { INodeRepository, IPathRepository } from "./repositories";
 import { IPolicyManager, IScionClient, ShowpathsPathResult } from "./services";
 
@@ -13,16 +13,13 @@ export async function getPathForAddress(
   scionClient: IScionClient,
   destination: string
 ): Promise<Path | null> {
-  if (!validateIsdAsSchema(destination)) {
-    // TODO: better error
-    throw new Error();
-  }
+  const validatedDestination = validateIsdAs(destination);
 
   // query the database for already validated paths
   const latestPolicyTimestamp = await policyManager.getLatestPolicyTimestamp();
 
   const validPaths = await pathRepository.getValidPathsForDestination(
-    destination,
+    validatedDestination,
     latestPolicyTimestamp
   );
 
@@ -32,7 +29,7 @@ export async function getPathForAddress(
   }
 
   // query SCION daemon for potential new paths to reach destination
-  const showpathsResults = await scionClient.showpaths(destination);
+  const showpathsResults = await scionClient.showpaths(validatedDestination);
   const newPaths = await Promise.all(showpathsResults.map(buildPathFromResult));
 
   // validate the paths using the policy manager
