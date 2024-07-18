@@ -25,6 +25,7 @@
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "allowJs": false,
+    "forceConsistentCasingInFileNames": true,
     "paths": {
       "src/*": ["./src/*"]
     }
