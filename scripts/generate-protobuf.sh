@@ -1,21 +1,24 @@
 #!/bin/bash
 
-base_dir="services"
-
-for subfolder in "$base_dir"/*/; do
+generate_protobufs(){
+  for subfolder in "$1"/*/; do
     if [ -d "$subfolder" ]; then
-        echo "Generating protobuf bindings for: $subfolder"
-        
-        cd "$subfolder" || continue
+      echo "Generating protobuf bindings for: $subfolder"
 
-        if [ -f "scripts/generate-protobuf.sh" ]; then
-            ./scripts/generate-protobuf.sh
-        else
-            echo "No generate-protobuf.sh script found in $subfolder"
-        fi
+      cd "$subfolder" || continue
 
-        cd "../.."
+      if [ -f "scripts/generate-protobuf.sh" ]; then
+        ./scripts/generate-protobuf.sh
+      else
+        echo "No generate-protobuf.sh script found in $subfolder"
+      fi
+
+      cd "../.."
     fi
-done
+  done
+}
+
+generate_protobufs services
+generate_protobufs sdks
 
 echo "Completed."

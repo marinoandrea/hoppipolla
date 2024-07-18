@@ -16,23 +16,19 @@ from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__
 import common_pb2 as common__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tnip.proto\x12\x0ehoppipolla.nip\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0c\x63ommon.proto\"\xdd\x04\n\x07HopData\x12\x0e\n\x06isd_as\x18\x01 \x01(\t\x12 \n\x18total_energy_consumption\x18\x02 \x01(\x02\x12\x1f\n\x17peak_energy_consumption\x18\x03 \x01(\x02\x12#\n\x1boff_peak_energy_consumption\x18\x04 \x01(\x02\x12#\n\x1b\x65nergy_consumption_per_hour\x18\x05 \x01(\x02\x12$\n\x1crenewable_energy_consumption\x18\x06 \x01(\x02\x12(\n non_renewable_energy_consumption\x18\x07 \x01(\x02\x12\x15\n\rco2_emissions\x18\x08 \x01(\x02\x12#\n\x1brenewable_energy_percentage\x18\t \x01(\x02\x12\x0e\n\x06uptime\x18\n \x01(\x02\x12\x10\n\x08\x64owntime\x18\x0b \x01(\x02\x12\x1d\n\x15maintenance_frequency\x18\x0c \x01(\x02\x12 \n\x18\x65nergy_efficiency_rating\x18\r \x01(\x02\x12\x1c\n\x14sustainability_index\x18\x0e \x01(\x02\x12\"\n\x1a\x63\x61rbon_footprint_reduction\x18\x0f \x01(\x02\x12\x39\n\x15last_maintenance_date\x18\x10 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x37\n\x13\x64\x61ta_collected_date\x18\x11 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x10\n\x08location\x18\x12 \x01(\t\")\n\x17GetLatestHopDataRequest\x12\x0e\n\x06isd_as\x18\x01 \x01(\t\"\\\n\x1bGetAggregatedHopDataRequest\x12\x0e\n\x06isd_as\x18\x01 \x01(\t\x12-\n\x08interval\x18\x02 \x01(\x0b\x32\x1b.hoppipolla.common.Interval\"]\n\x1cGetHopDataForIntervalRequest\x12\x0e\n\x06isd_as\x18\x01 \x01(\t\x12-\n\x08interval\x18\x02 \x01(\x0b\x32\x1b.hoppipolla.common.Interval\"F\n\x1dGetHopDataForIntervalResponse\x12%\n\x04\x64\x61ta\x18\x01 \x03(\x0b\x32\x17.hoppipolla.nip.HopData2\xb6\x02\n\x08NipProxy\x12V\n\x10GetLatestHopData\x12\'.hoppipolla.nip.GetLatestHopDataRequest\x1a\x17.hoppipolla.nip.HopData\"\x00\x12v\n\x15GetHopDataForInterval\x12,.hoppipolla.nip.GetHopDataForIntervalRequest\x1a-.hoppipolla.nip.GetHopDataForIntervalResponse\"\x00\x12Z\n\x14GetAggregatedHopData\x12\'.hoppipolla.nip.GetLatestHopDataRequest\x1a\x17.hoppipolla.nip.HopData\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tnip.proto\x12\x0ehoppipolla.nip\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0c\x63ommon.proto\"\x93\x03\n\rEnergyReading\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06isd_as\x18\x02 \x01(\t\x12\x12\n\nmachine_id\x18\x03 \x01(\t\x12\x30\n\x0c\x63ollected_at\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x1e\n\x16\x65nergy_consumption_kWh\x18\x05 \x01(\x02\x12\x1c\n\x14\x63pu_usage_percentage\x18\x06 \x01(\x02\x12\x1f\n\x17memory_usage_percentage\x18\x07 \x01(\x02\x12\x1a\n\x12network_traffic_MB\x18\x08 \x01(\x02\x12\x1b\n\x13temperature_celsius\x18\t \x01(\x02\x12\x14\n\x0cpower_source\x18\n \x01(\t\x12\x0e\n\x06status\x18\x0b \x01(\t\x12\x1b\n\x13\x63\x61rbon_emissions_kg\x18\x0c \x01(\x02\x12#\n\x1brenewable_energy_percentage\x18\r \x01(\x02\x12 \n\x18\x65nergy_efficiency_rating\x18\x0e \x01(\t\"Y\n\x18GetEnergyReadingsRequest\x12\x0e\n\x06isd_as\x18\x01 \x01(\t\x12-\n\x08interval\x18\x02 \x01(\x0b\x32\x1b.hoppipolla.common.Interval\"H\n\x19GetEnergyReadingsResponse\x12+\n\x04\x64\x61ta\x18\x01 \x03(\x0b\x32\x1d.hoppipolla.nip.EnergyReading2v\n\x08NipProxy\x12j\n\x11GetEnergyReadings\x12(.hoppipolla.nip.GetEnergyReadingsRequest\x1a).hoppipolla.nip.GetEnergyReadingsResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'nip_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_HOPDATA']._serialized_start=77
-  _globals['_HOPDATA']._serialized_end=682
-  _globals['_GETLATESTHOPDATAREQUEST']._serialized_start=684
-  _globals['_GETLATESTHOPDATAREQUEST']._serialized_end=725
-  _globals['_GETAGGREGATEDHOPDATAREQUEST']._serialized_start=727
-  _globals['_GETAGGREGATEDHOPDATAREQUEST']._serialized_end=819
-  _globals['_GETHOPDATAFORINTERVALREQUEST']._serialized_start=821
-  _globals['_GETHOPDATAFORINTERVALREQUEST']._serialized_end=914
-  _globals['_GETHOPDATAFORINTERVALRESPONSE']._serialized_start=916
-  _globals['_GETHOPDATAFORINTERVALRESPONSE']._serialized_end=986
-  _globals['_NIPPROXY']._serialized_start=989
-  _globals['_NIPPROXY']._serialized_end=1299
+  _globals['_ENERGYREADING']._serialized_start=77
+  _globals['_ENERGYREADING']._serialized_end=480
+  _globals['_GETENERGYREADINGSREQUEST']._serialized_start=482
+  _globals['_GETENERGYREADINGSREQUEST']._serialized_end=571
+  _globals['_GETENERGYREADINGSRESPONSE']._serialized_start=573
+  _globals['_GETENERGYREADINGSRESPONSE']._serialized_end=645
+  _globals['_NIPPROXY']._serialized_start=647
+  _globals['_NIPPROXY']._serialized_end=765
 # @@protoc_insertion_point(module_scope)
