@@ -7,8 +7,9 @@ services:
     container_name: path-analyzer
     environment:
       - NODE_ENV=${HOPPIPOLLA_ENV:-development}
+      - HOST=${HOPPIPOLLA_PATH_ANALYZER_HOST:-0.0.0.0}
       - PORT=${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}
-      - SCIOND_URI=${HOPPIPOLLA_SCIOND_URI:-127.0.0.1:30255}
+      - SCIOND_URI=${HOPPIPOLLA_SCIOND_URI}
       - DATABASE_URI=/var/lib/hoppipolla/path-analyzer/sqlite.db
       - POLICY_MANAGER_URI=policy-manager:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}
       - MAX_PATHS_BATCH=${HOPPIPOLLA_PATH_ANALYZER_MAX_PATHS_BATCH:-10}
@@ -68,10 +69,19 @@ services:
       - NODE_ENV=${HOPPIPOLLA_ENV:-development}
       - HOST=${HOPPIPOLLA_NIP_PROXY_HOST:-localhost}
       - PORT=${HOPPIPOLLA_NIP_PROXY_PORT:-27003}
+      - ENERGY_READING_MOCKFILE=${HOPPIPOLLA_NIP_PROXY_ENERGY_READING_MOCKFILE:-mocks/energy-reading.json}
     ports:
       - 127.0.0.1:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27003}:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27003}
+    volumes:
+      - ./mocks:/app/mocks
     networks:
       - hoppipolla
+
+  nip-proxy_cache:
+    image: redis/redis-stack:latest
+    ports:
+      - 127.0.0.1:6379:6379
+      - 127.0.0.1:8001:8001
 
 networks:
   hoppipolla:
