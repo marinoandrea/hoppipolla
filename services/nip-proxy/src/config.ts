@@ -8,6 +8,7 @@ export const config = z
     HOST: z.string().default("127.0.0.1"),
     PORT: z.coerce.number().default(27_001),
     LOG_LEVEL: z.enum(["info", "error", "debug", "warning"]).default("debug"),
+    REDIS_URI: z.string(),
     ENERGY_READING_MOCKFILE: z.string().default("mocks/energy-readings.json"),
   })
   .parse(process.env);

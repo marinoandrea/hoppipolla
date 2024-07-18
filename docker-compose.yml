@@ -69,9 +69,10 @@ services:
       - NODE_ENV=${HOPPIPOLLA_ENV:-development}
       - HOST=${HOPPIPOLLA_NIP_PROXY_HOST:-localhost}
       - PORT=${HOPPIPOLLA_NIP_PROXY_PORT:-27003}
+      - REDIS_URI=redis://nip-proxy_cache:6379
       - ENERGY_READING_MOCKFILE=${HOPPIPOLLA_NIP_PROXY_ENERGY_READING_MOCKFILE:-mocks/energy-reading.json}
     ports:
-      - 127.0.0.1:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27003}:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27003}
+      - 127.0.0.1:${HOPPIPOLLA_NIP_PROXY_PORT:-27003}:${HOPPIPOLLA_NIP_PROXY_PORT:-27003}
     volumes:
       - ./mocks:/app/mocks
     networks:
@@ -82,6 +83,8 @@ services:
     ports:
       - 127.0.0.1:6379:6379
       - 127.0.0.1:8001:8001
+    networks:
+      - hoppipolla
 
 networks:
   hoppipolla:
