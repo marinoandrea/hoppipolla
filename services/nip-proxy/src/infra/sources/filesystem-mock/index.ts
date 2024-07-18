@@ -7,11 +7,9 @@ import {
   EnergyReading,
   energyReadingSchema,
   isdAsSchema,
-} from "src/domain/entities";
-import {
-  IReadingSource,
   ReadingCollectionQuery,
-} from "src/domain/repositories";
+} from "src/domain/entities";
+import { IReadingSource } from "src/domain/repositories";
 
 abstract class FilesystemMockReadingSource<TReading extends DataReading>
   implements IReadingSource<TReading>

@@ -1,8 +1,9 @@
-import { DataReading, IsdAs } from "src/domain/entities";
 import {
-  IReadingCollectionRepository,
+  DataReading,
+  IsdAs,
   ReadingCollectionQuery,
-} from "src/domain/repositories";
+} from "src/domain/entities";
+import { IReadingCollectionRepository } from "src/domain/repositories";
 
 export class InMemoryReadingCollectionRepository<TReading extends DataReading>
   implements IReadingCollectionRepository<TReading>

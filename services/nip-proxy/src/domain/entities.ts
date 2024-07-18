@@ -1,4 +1,31 @@
 import { z } from "zod";
+import { EntityValidationError, InternalError } from "./errors";
+
+function handleZodValidation<TReading>(
+  entity: string,
+  parse: (data: unknown) => TReading
+) {
+  return (data: unknown) => {
+    try {
+      return parse(data);
+    } catch (e) {
+      if (!(e instanceof z.ZodError)) {
+        throw e;
+      }
+
+      const issue = e.issues.pop();
+      if (!issue) {
+        throw new InternalError(`Validation failed for unknown reasons: ${e}`);
+      }
+
+      throw new EntityValidationError(
+        entity,
+        issue.path.join("/"),
+        issue.message
+      );
+    }
+  };
+}
 
 /** A unique identifier for the domain entities. */
 export type Identifier = string;
@@ -17,6 +44,21 @@ export type IsdAs = z.infer<typeof isdAsSchema>;
 const dateInThePastSchema = z
   .date()
   .refine((d) => d <= new Date(), { message: "date cannot be in the future" });
+
+const readingCollectionQuerySchema = z.object({
+  isdAs: isdAsSchema,
+  startTime: dateInThePastSchema,
+  endTime: dateInThePastSchema,
+});
+
+export type ReadingCollectionQuery = z.infer<
+  typeof readingCollectionQuerySchema
+>;
+
+export const validateReadingCollectionQuery = handleZodValidation(
+  "ReadingCollectionQuery",
+  readingCollectionQuerySchema.parse
+);
 
 const dataReadingSchema = z.object({
   id: identifierSchema.describe(
@@ -112,4 +154,8 @@ export const energyReadingSchema = z
   .readonly();
 
 export type EnergyReading = z.infer<typeof energyReadingSchema>;
-export const validateEnergyReading = energyReadingSchema.parse;
+
+export const validateEnergyReading = handleZodValidation(
+  "EnergyReading",
+  energyReadingSchema.parse
+);

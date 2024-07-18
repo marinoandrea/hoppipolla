@@ -1,16 +1,21 @@
-import { DataReading } from "./entities";
-import {
-  IReadingCollectionRepository,
-  IReadingSource,
-  ReadingCollectionQuery,
-} from "./repositories";
+import { DataReading, validateReadingCollectionQuery } from "./entities";
+import { IReadingCollectionRepository, IReadingSource } from "./repositories";
+
+type QueryAndUpdateRepositoryInput = {
+  isdAs: string;
+  startTime: Date;
+  endTime: Date;
+};
 
 export async function queryAndUpdateRepository<TReading extends DataReading>(
   readingRepository: IReadingCollectionRepository<TReading>,
   readingSource: IReadingSource<TReading>,
-  query: ReadingCollectionQuery
+  query: QueryAndUpdateRepositoryInput
 ) {
-  const storedEntities = await readingRepository.getAllInInterval(query);
+  const validatedQuery = validateReadingCollectionQuery(query);
+
+  const storedEntities =
+    await readingRepository.getAllInInterval(validatedQuery);
 
   // find gaps in the requested data
   let minStoredCollectedAt = new Date();
@@ -47,18 +52,27 @@ export async function queryAndUpdateRepository<TReading extends DataReading>(
     );
   }
 
-  const [beforeEntities, afterEntities] = await Promise.all(tasks);
+  const results = await Promise.all(tasks);
+  const fetchedEntities = results.flat();
 
   // defer the storage operation to speed up the service response
-  using cleanup = new DisposableStack();
+  try {
+    return [...fetchedEntities, ...storedEntities];
+  } finally {
+    await readingRepository.store(query.isdAs, ...fetchedEntities);
+    /*
+    FIXME: this is the right way to do it, however DisposableStack appears
+    to be not defined even when including lib.esnext.disposable
 
-  cleanup.defer(async () => {
-    await readingRepository.store(
-      query.isdAs,
-      ...beforeEntities,
-      ...afterEntities
-    );
-  });
+    using cleanup = new DisposableStack();
 
-  return [...beforeEntities, ...storedEntities, ...afterEntities];
+    cleanup.defer(async () => {
+      await readingRepository.store(
+        query.isdAs,
+        ...beforeEntities,
+        ...afterEntities
+      );
+    })
+    */
+  }
 }

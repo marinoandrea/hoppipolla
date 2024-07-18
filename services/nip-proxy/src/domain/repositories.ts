@@ -1,10 +1,4 @@
-import { DataReading, IsdAs } from "./entities";
-
-export type ReadingCollectionQuery = {
-  isdAs: IsdAs;
-  startTime: Date;
-  endTime: Date;
-};
+import { DataReading, IsdAs, ReadingCollectionQuery } from "./entities";
 
 /**
  * Interface for an implementation of the repository pattern for a
