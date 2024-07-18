@@ -65,6 +65,8 @@ services:
     build:
       context: ./services/nip-proxy
     container_name: nip-proxy
+    depends_on:
+      - nip-proxy_cache
     environment:
       - NODE_ENV=${HOPPIPOLLA_ENV:-development}
       - HOST=${HOPPIPOLLA_NIP_PROXY_HOST:-localhost}
