@@ -1,0 +1,34 @@
+{
+  "1-ff00:0:110": [
+    {
+      "id": "cc196b74-9402-49c4-8b13-b940c6664e92",
+      "isdAs": "1-ff00:0:110",
+      "collectedAt": "2024-07-08T21:00:00",
+      "operatingCountryCodes": ["NL"]
+    }
+  ],
+  "1-ff00:0:111": [
+    {
+      "id": "09fe67a9-28d4-46b9-85ac-1364c4661d97",
+      "isdAs": "1-ff00:0:111",
+      "collectedAt": "2024-07-08T21:00:00",
+      "operatingCountryCodes": ["NL"]
+    }
+  ],
+  "1-ff00:0:112": [
+    {
+      "id": "86a0e601-1bf3-4038-b8ae-ed56d4fd686c",
+      "isdAs": "1-ff00:0:112",
+      "collectedAt": "2024-07-08T21:00:00",
+      "operatingCountryCodes": ["$CountryCode", "NL"]
+    }
+  ],
+  "1-ff00:0:113": [
+    {
+      "id": "413ce3f3-914f-466a-ade7-5fdd4d2c9f2a",
+      "isdAs": "1-ff00:0:113",
+      "collectedAt": "2024-07-08T21:00:00",
+      "operatingCountryCodes": ["NL"]
+    }
+  ]
+}
