@@ -1,9 +1,13 @@
 [tool.poetry]
 name = "hoppipolla"
 version = "0.1.0"
-description = ""
+description = "Python SDK for the Hoppipolla framework"
 authors = ["Andrea Marino <am.marinoandrea@gmail.com>"]
 readme = "README.md"
+
+[project.urls]
+Homepage = "https://github.com/marinoandrea/hoppipolla"
+Issues = "https://github.com/marinoandrea/hoppipolla/issues"
 
 [tool.poetry.dependencies]
 python = "^3.12"
