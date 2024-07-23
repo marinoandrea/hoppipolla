@@ -8,44 +8,76 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Issuer(_message.Message):
-    __slots__ = ("id", "name", "description")
+    __slots__ = ("id", "created_at", "updated_at", "name", "default", "description")
     ID_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
+    DEFAULT_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     id: str
+    created_at: str
+    updated_at: str
     name: str
+    default: bool
     description: str
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., created_at: _Optional[str] = ..., updated_at: _Optional[str] = ..., name: _Optional[str] = ..., default: bool = ..., description: _Optional[str] = ...) -> None: ...
 
 class Policy(_message.Message):
-    __slots__ = ("id", "issuer_id", "active", "statements", "description")
+    __slots__ = ("id", "created_at", "updated_at", "issuer", "active", "statements", "title", "description")
     ID_FIELD_NUMBER: _ClassVar[int]
-    ISSUER_ID_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
+    ISSUER_FIELD_NUMBER: _ClassVar[int]
     ACTIVE_FIELD_NUMBER: _ClassVar[int]
     STATEMENTS_FIELD_NUMBER: _ClassVar[int]
+    TITLE_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     id: str
-    issuer_id: str
+    created_at: str
+    updated_at: str
+    issuer: Issuer
     active: bool
     statements: str
+    title: str
     description: str
-    def __init__(self, id: _Optional[str] = ..., issuer_id: _Optional[str] = ..., active: bool = ..., statements: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., created_at: _Optional[str] = ..., updated_at: _Optional[str] = ..., issuer: _Optional[_Union[Issuer, _Mapping]] = ..., active: bool = ..., statements: _Optional[str] = ..., title: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
 
 class CreatePolicyRequest(_message.Message):
-    __slots__ = ("issuer_id", "statements", "description")
+    __slots__ = ("issuer_id", "statements", "title", "description")
     ISSUER_ID_FIELD_NUMBER: _ClassVar[int]
     STATEMENTS_FIELD_NUMBER: _ClassVar[int]
+    TITLE_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     issuer_id: str
     statements: str
+    title: str
     description: str
-    def __init__(self, issuer_id: _Optional[str] = ..., statements: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
+    def __init__(self, issuer_id: _Optional[str] = ..., statements: _Optional[str] = ..., title: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
 
 class CreatePolicyResponse(_message.Message):
-    __slots__ = ("id",)
+    __slots__ = ("policy",)
+    POLICY_FIELD_NUMBER: _ClassVar[int]
+    policy: Policy
+    def __init__(self, policy: _Optional[_Union[Policy, _Mapping]] = ...) -> None: ...
+
+class UpdatePolicyRequest(_message.Message):
+    __slots__ = ("id", "statements", "title", "description")
     ID_FIELD_NUMBER: _ClassVar[int]
+    STATEMENTS_FIELD_NUMBER: _ClassVar[int]
+    TITLE_FIELD_NUMBER: _ClassVar[int]
+    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     id: str
-    def __init__(self, id: _Optional[str] = ...) -> None: ...
+    statements: str
+    title: str
+    description: str
+    def __init__(self, id: _Optional[str] = ..., statements: _Optional[str] = ..., title: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
+
+class UpdatePolicyResponse(_message.Message):
+    __slots__ = ("policy",)
+    POLICY_FIELD_NUMBER: _ClassVar[int]
+    policy: Policy
+    def __init__(self, policy: _Optional[_Union[Policy, _Mapping]] = ...) -> None: ...
 
 class DeletePolicyRequest(_message.Message):
     __slots__ = ("id",)
@@ -60,10 +92,22 @@ class CreateIssuerRequest(_message.Message):
     def __init__(self, name: _Optional[str] = ...) -> None: ...
 
 class CreateIssuerResponse(_message.Message):
+    __slots__ = ("issuer",)
+    ISSUER_FIELD_NUMBER: _ClassVar[int]
+    issuer: Issuer
+    def __init__(self, issuer: _Optional[_Union[Issuer, _Mapping]] = ...) -> None: ...
+
+class GetPolicyRequest(_message.Message):
     __slots__ = ("id",)
     ID_FIELD_NUMBER: _ClassVar[int]
     id: str
     def __init__(self, id: _Optional[str] = ...) -> None: ...
+
+class GetPolicyResponse(_message.Message):
+    __slots__ = ("policy",)
+    POLICY_FIELD_NUMBER: _ClassVar[int]
+    policy: Policy
+    def __init__(self, policy: _Optional[_Union[Policy, _Mapping]] = ...) -> None: ...
 
 class ListPoliciesResponse(_message.Message):
     __slots__ = ("policies",)
@@ -96,11 +140,7 @@ class GetLatestPolicyTimestampResponse(_message.Message):
     def __init__(self, timestamp: _Optional[str] = ...) -> None: ...
 
 class GetDefaultIssuerResponse(_message.Message):
-    __slots__ = ("id", "name", "description")
-    ID_FIELD_NUMBER: _ClassVar[int]
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    id: str
-    name: str
-    description: str
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
+    __slots__ = ("issuer",)
+    ISSUER_FIELD_NUMBER: _ClassVar[int]
+    issuer: Issuer
+    def __init__(self, issuer: _Optional[_Union[Issuer, _Mapping]] = ...) -> None: ...

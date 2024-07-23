@@ -38,6 +38,7 @@ def map_policy_model_to_entity(model: PolicyModel) -> Policy:
         created_at=model.created_at,
         updated_at=model.updated_at,
         statements=model.statements,
+        title=model.title,
         description=model.description,
         active=model.active,
         issuer=map_issuer_model_to_entity(model.issuer)
@@ -52,6 +53,7 @@ def map_policy_entity_to_model(entity: Policy) -> PolicyModel:
         id=entity.id,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
+        title=entity.title,
         statements=entity.statements,
         description=entity.description,
         active=entity.active,
@@ -67,6 +69,7 @@ def map_meta_policy_model_to_entity(model: MetaPolicyModel) -> MetaPolicy:
         id=model.id,
         created_at=model.created_at,
         updated_at=model.updated_at,
+        title=model.title,
         statements=model.statements,
     )
 
@@ -79,5 +82,6 @@ def map_meta_policy_entity_to_model(entity: MetaPolicy) -> MetaPolicyModel:
         id=entity.id,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
+        title=entity.title,
         statements=entity.statements,
     )

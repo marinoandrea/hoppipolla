@@ -45,6 +45,11 @@ class PolicyManagerStub(object):
                 request_serializer=policy__pb2.CreatePolicyRequest.SerializeToString,
                 response_deserializer=policy__pb2.CreatePolicyResponse.FromString,
                 _registered_method=True)
+        self.UpdatePolicy = channel.unary_unary(
+                '/hoppipolla.policy.PolicyManager/UpdatePolicy',
+                request_serializer=policy__pb2.UpdatePolicyRequest.SerializeToString,
+                response_deserializer=policy__pb2.UpdatePolicyResponse.FromString,
+                _registered_method=True)
         self.DeletePolicy = channel.unary_unary(
                 '/hoppipolla.policy.PolicyManager/DeletePolicy',
                 request_serializer=policy__pb2.DeletePolicyRequest.SerializeToString,
@@ -75,12 +80,23 @@ class PolicyManagerStub(object):
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
                 response_deserializer=policy__pb2.GetDefaultIssuerResponse.FromString,
                 _registered_method=True)
+        self.GetPolicy = channel.unary_unary(
+                '/hoppipolla.policy.PolicyManager/GetPolicy',
+                request_serializer=policy__pb2.GetPolicyRequest.SerializeToString,
+                response_deserializer=policy__pb2.GetPolicyResponse.FromString,
+                _registered_method=True)
 
 
 class PolicyManagerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def CreatePolicy(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdatePolicy(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -122,6 +138,12 @@ class PolicyManagerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetPolicy(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_PolicyManagerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -129,6 +151,11 @@ def add_PolicyManagerServicer_to_server(servicer, server):
                     servicer.CreatePolicy,
                     request_deserializer=policy__pb2.CreatePolicyRequest.FromString,
                     response_serializer=policy__pb2.CreatePolicyResponse.SerializeToString,
+            ),
+            'UpdatePolicy': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdatePolicy,
+                    request_deserializer=policy__pb2.UpdatePolicyRequest.FromString,
+                    response_serializer=policy__pb2.UpdatePolicyResponse.SerializeToString,
             ),
             'DeletePolicy': grpc.unary_unary_rpc_method_handler(
                     servicer.DeletePolicy,
@@ -160,6 +187,11 @@ def add_PolicyManagerServicer_to_server(servicer, server):
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                     response_serializer=policy__pb2.GetDefaultIssuerResponse.SerializeToString,
             ),
+            'GetPolicy': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPolicy,
+                    request_deserializer=policy__pb2.GetPolicyRequest.FromString,
+                    response_serializer=policy__pb2.GetPolicyResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'hoppipolla.policy.PolicyManager', rpc_method_handlers)
@@ -188,6 +220,33 @@ class PolicyManager(object):
             '/hoppipolla.policy.PolicyManager/CreatePolicy',
             policy__pb2.CreatePolicyRequest.SerializeToString,
             policy__pb2.CreatePolicyResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdatePolicy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/hoppipolla.policy.PolicyManager/UpdatePolicy',
+            policy__pb2.UpdatePolicyRequest.SerializeToString,
+            policy__pb2.UpdatePolicyResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -350,6 +409,33 @@ class PolicyManager(object):
             '/hoppipolla.policy.PolicyManager/GetDefaultIssuer',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             policy__pb2.GetDefaultIssuerResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetPolicy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/hoppipolla.policy.PolicyManager/GetPolicy',
+            policy__pb2.GetPolicyRequest.SerializeToString,
+            policy__pb2.GetPolicyResponse.FromString,
             options,
             channel_credentials,
             insecure,

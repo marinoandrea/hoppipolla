@@ -16,6 +16,7 @@ class PolicyModel(BaseModel):
 
     issuer_id: Mapped[UUID] = mapped_column(ForeignKey("issuer.id"))
     statements: Mapped[str] = mapped_column(Text())
+    title: Mapped[str] = mapped_column(Text(), nullable=False)
     description: Mapped[str | None] = mapped_column(Text(), nullable=True)
     active: Mapped[bool] = mapped_column(Boolean())
 
@@ -28,6 +29,7 @@ class PolicyModel(BaseModel):
 class MetaPolicyModel(BaseModel):
     __tablename__ = "meta_policy"
 
+    title: Mapped[str] = mapped_column(Text(), nullable=False)
     statements: Mapped[str] = mapped_column(Text())
 
     def __repr__(self) -> str:

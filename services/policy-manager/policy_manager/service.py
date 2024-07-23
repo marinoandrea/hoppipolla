@@ -1,13 +1,17 @@
 from datetime import datetime
+from typing import Optional
 
-from policy_manager.domain.entities import Issuer, Policy
+from policy_manager.domain.entities import Identifier, Issuer, Policy
 from policy_manager.domain.use_cases import (CreatePolicyInput,
                                              CreatePolicyOutput,
+                                             UpdatePolicyInput,
+                                             UpdatePolicyOutput,
                                              ValidatePathInput,
                                              ValidatePathOutput, create_policy,
-                                             get_default_issuer,
+                                             delete_policy, get_default_issuer,
                                              get_latest_policy_timestamp,
-                                             list_all_policies, validate_path)
+                                             get_policy, list_all_policies,
+                                             update_policy, validate_path)
 from policy_manager.infra.database.vendors.sqlalchemy import get_session
 from policy_manager.infra.database.vendors.sqlalchemy.repositories import (
     SQLAlchemyIssuerRepository, SQLAlchemyMetaPolicyRepository,
@@ -29,6 +33,28 @@ class PolicyManagerService:
                 output = create_policy(
                     policy_repository,
                     issuer_repository,
+                    ServiceLocator.asp_manager,
+                    input_data
+                )
+
+                session.commit()
+
+                return output
+
+            except Exception as e:
+                session.rollback()
+                raise e
+
+    @staticmethod
+    def execute_update_policy(
+        input_data: UpdatePolicyInput
+    ) -> UpdatePolicyOutput:
+        with get_session() as session:
+            try:
+                policy_repository = SQLAlchemyPolicyRepository(session)
+
+                output = update_policy(
+                    policy_repository,
                     ServiceLocator.asp_manager,
                     input_data
                 )
@@ -98,6 +124,27 @@ class PolicyManagerService:
             try:
                 policy_repository = SQLAlchemyPolicyRepository(session)
                 return list_all_policies(policy_repository)
+            except Exception as e:
+                session.rollback()
+                raise e
+
+    @staticmethod
+    def execute_get_policy(id: Identifier) -> Optional[Policy]:
+        with get_session() as session:
+            try:
+                policy_repository = SQLAlchemyPolicyRepository(session)
+                return get_policy(policy_repository, id)
+            except Exception as e:
+                session.rollback()
+                raise e
+
+    @staticmethod
+    def execute_delete_policy(id: Identifier) -> None:
+        with get_session() as session:
+            try:
+                policy_repository = SQLAlchemyPolicyRepository(session)
+                delete_policy(policy_repository, id)
+                session.commit()
             except Exception as e:
                 session.rollback()
                 raise e

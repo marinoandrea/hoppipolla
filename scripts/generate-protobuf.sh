@@ -20,5 +20,6 @@ generate_protobufs(){
 
 generate_protobufs services
 generate_protobufs sdks
+generate_protobufs apps
 
 echo "Completed."

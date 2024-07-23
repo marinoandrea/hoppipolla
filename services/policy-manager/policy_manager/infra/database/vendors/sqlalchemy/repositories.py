@@ -47,8 +47,8 @@ class SQLAlchemyRepository(
         model = self.map_entity_to_model(entity)
         self.session.merge(model)
 
-    def remove(self, entity: TEntity):
-        model = self.map_entity_to_model(entity)
+    def remove(self, id: Identifier):
+        model = self.get_query().get(id)
         self.session.delete(model)
 
     def get_by_id(self, id: Identifier) -> Optional[TEntity]:

@@ -11,22 +11,29 @@ package hoppipolla.policy;
 // or even an individual.
 message Issuer {
   string id = 1;
-  string name = 2;
-  optional string description = 3;
+  string created_at = 2;
+  string updated_at = 3;
+  string name = 4;
+  bool default = 5;
+  optional string description = 6;
 }
 
 // Policy validating a path based on hops and relative NIP data using 
 // Hoppipolla ASP conventions.
 message Policy {
   string id = 1;
-  string issuer_id = 2;
-  bool active = 3;
-  string statements = 4;
-  optional string description = 5;
+  string created_at = 2;
+  string updated_at = 3;
+  Issuer issuer = 4;
+  bool active = 5;
+  string statements = 6;
+  string title = 7;
+  optional string description = 8;
 }
 
 service PolicyManager {
   rpc CreatePolicy(CreatePolicyRequest) returns (CreatePolicyResponse) {}
+  rpc UpdatePolicy(UpdatePolicyRequest) returns (UpdatePolicyResponse) {}
   rpc DeletePolicy(DeletePolicyRequest) returns (google.protobuf.Empty) {}
   rpc CreateIssuer(CreateIssuerRequest) returns (CreateIssuerResponse) {}
   rpc ListPolicies(google.protobuf.Empty) returns (ListPoliciesResponse) {}
@@ -35,15 +42,28 @@ service PolicyManager {
     returns (GetLatestPolicyTimestampResponse) {}
   rpc GetDefaultIssuer(google.protobuf.Empty) 
     returns (GetDefaultIssuerResponse) {}
+  rpc GetPolicy(GetPolicyRequest) 
+    returns (GetPolicyResponse) {}
 }
 
 message CreatePolicyRequest { 
   string issuer_id = 1;
   string statements = 2;
-  optional string description = 3; 
+  optional string title = 3;
+  optional string description = 4; 
 }
 message CreatePolicyResponse { 
-  string id = 1; 
+  Policy policy = 1; 
+}
+
+message UpdatePolicyRequest { 
+  string id = 1;
+  optional string statements = 2;
+  optional string title = 3;
+  optional string description = 4; 
+}
+message UpdatePolicyResponse { 
+  Policy policy = 1; 
 }
 
 message DeletePolicyRequest { 
@@ -52,9 +72,16 @@ message DeletePolicyRequest {
 
 message CreateIssuerRequest { 
   string name = 1;
- }
+}
 message CreateIssuerResponse { 
-  string id = 1; 
+  Issuer issuer = 1; 
+}
+
+message GetPolicyRequest { 
+  string id = 1;
+}
+message GetPolicyResponse { 
+  optional Policy policy = 1; 
 }
 
 message ListPoliciesResponse {
@@ -76,7 +103,5 @@ message GetLatestPolicyTimestampResponse {
 }
 
 message GetDefaultIssuerResponse {
-  string id = 1;
-  string name = 2;
-  optional string description = 3;
+  Issuer issuer = 1;
 }

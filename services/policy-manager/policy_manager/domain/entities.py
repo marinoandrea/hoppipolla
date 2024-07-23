@@ -74,6 +74,9 @@ class Policy(Entity):
     statements: str = field(default="", repr=False, compare=False)
     """ASP source code for the policy"""
 
+    title: str = field(default="Untitled", compare=False)
+    """Human-readable title of the policy"""
+
     description: str | None = field(default=None, compare=False)
     """Human-readable description of the policy"""
 
@@ -102,6 +105,9 @@ class MetaPolicy(Entity):
     """
     statements: str = field(default="", repr=False, compare=False)
     """ASP source code for the policy"""
+
+    title: str = field(default="Untitled", compare=False)
+    """Human-readable title of the meta-policy"""
 
     description: str | None = field(default=None, compare=False)
     """Human-readable description of the meta-policy"""

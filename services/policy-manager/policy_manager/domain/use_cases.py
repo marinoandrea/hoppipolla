@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from functools import partial
 from multiprocessing.pool import ThreadPool
+from typing import Optional
 
 from policy_manager.domain.entities import (HopReading, Identifier, Issuer,
                                             Path, Policy, TimeInterval)
@@ -18,6 +19,7 @@ from .services import AspManager, ConflictResolutionStatus, NipProxy
 @dataclass(frozen=True)
 class CreatePolicyInput:
     issuer_id: Identifier
+    title: str
     statements: str
     description: str | None = None
 
@@ -51,6 +53,7 @@ def create_policy(
 
     policy = Policy(
         issuer=issuer,
+        title=input_data.title,
         statements=input_data.statements,
         description=input_data.description
     )
@@ -59,6 +62,54 @@ def create_policy(
     logging.debug(f"Created new policy: {policy.id}")
 
     return CreatePolicyOutput(policy=policy)
+
+
+@dataclass(frozen=True)
+class UpdatePolicyInput:
+    id: Identifier
+    title: str | None = None
+    statements: str | None = None
+    description: str | None = None
+
+
+@dataclass(frozen=True)
+class UpdatePolicyOutput:
+    policy: Policy
+
+
+def update_policy(
+    policy_repository: PolicyRepository,
+    asp_manager: AspManager,
+    input_data: UpdatePolicyInput
+) -> UpdatePolicyOutput:
+    """
+    Update a path-level policy on the service.
+    """
+    policy = policy_repository.get_by_id(input_data.id)
+
+    if policy is None:
+        raise InvalidInputError("id", input_data.id, "No policy with id")
+
+    if input_data.title is not None:
+        policy.title = input_data.title
+
+    if input_data.description is not None:
+        policy.description = input_data.description
+
+    if input_data.statements is not None:
+        try:
+            asp_manager.check_syntax(input_data.statements)
+            policy.statements = input_data.statements
+        except ValueError:
+            raise InvalidInputError(
+                "statements", input_data.statements, "Invalid ASP syntax for policy")
+
+    policy.updated_at = datetime.now()
+    policy_repository.add(policy)
+
+    logging.debug(f"Updated policy: {policy.id}")
+
+    return UpdatePolicyOutput(policy=policy)
 
 
 def generate_validation_default_interval():
@@ -186,3 +237,16 @@ def get_default_issuer(issuer_repository: IssuerRepository) -> Issuer:
 
 def list_all_policies(policy_repository: PolicyRepository) -> list[Policy]:
     return policy_repository.get_all_active()
+
+
+def get_policy(policy_repository: PolicyRepository, id: Identifier) -> Optional[Policy]:
+    return policy_repository.get_by_id(id)
+
+
+def delete_policy(policy_repository: PolicyRepository, id: Identifier) -> None:
+    try:
+        logging.debug(f"Deleting policy {id=}")
+        return policy_repository.remove(id)
+    except Exception as e:
+        logging.debug(e)
+        raise InvalidInputError("id", id, "No policy with ID")

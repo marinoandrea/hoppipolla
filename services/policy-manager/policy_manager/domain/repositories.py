@@ -22,7 +22,7 @@ class EntityRepository(Generic[TEntity]):
         ...
 
     @abstractmethod
-    def remove(self, policy: TEntity):
+    def remove(self, id: Identifier):
         """
         Remove an entity from the repository.
         """
