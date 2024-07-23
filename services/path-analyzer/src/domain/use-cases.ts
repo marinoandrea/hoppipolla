@@ -51,7 +51,9 @@ export async function getPathForAddress(
     })
   );
 
-  logger.debug(`Validated by policy-manager: ${newPaths.length}`);
+  logger.debug(
+    `Validated by policy-manager: ${newPaths.filter((np) => np.valid).length}`
+  );
 
   await pathRepository.addAll(newPaths);
 
