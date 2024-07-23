@@ -44,12 +44,23 @@ class NipProxyStub(object):
                 request_serializer=nip__pb2.GetEnergyReadingsRequest.SerializeToString,
                 response_deserializer=nip__pb2.GetEnergyReadingsResponse.FromString,
                 _registered_method=True)
+        self.GetGeoReadings = channel.unary_unary(
+                '/hoppipolla.nip.NipProxy/GetGeoReadings',
+                request_serializer=nip__pb2.GetGeoReadingsRequest.SerializeToString,
+                response_deserializer=nip__pb2.GetGeoReadingsResponse.FromString,
+                _registered_method=True)
 
 
 class NipProxyServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def GetEnergyReadings(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetGeoReadings(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -62,6 +73,11 @@ def add_NipProxyServicer_to_server(servicer, server):
                     servicer.GetEnergyReadings,
                     request_deserializer=nip__pb2.GetEnergyReadingsRequest.FromString,
                     response_serializer=nip__pb2.GetEnergyReadingsResponse.SerializeToString,
+            ),
+            'GetGeoReadings': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetGeoReadings,
+                    request_deserializer=nip__pb2.GetGeoReadingsRequest.FromString,
+                    response_serializer=nip__pb2.GetGeoReadingsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -91,6 +107,33 @@ class NipProxy(object):
             '/hoppipolla.nip.NipProxy/GetEnergyReadings',
             nip__pb2.GetEnergyReadingsRequest.SerializeToString,
             nip__pb2.GetEnergyReadingsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetGeoReadings(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/hoppipolla.nip.NipProxy/GetGeoReadings',
+            nip__pb2.GetGeoReadingsRequest.SerializeToString,
+            nip__pb2.GetGeoReadingsResponse.FromString,
             options,
             channel_credentials,
             insecure,

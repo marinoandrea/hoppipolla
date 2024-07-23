@@ -1,9 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
-import "google/protobuf/timestamp.proto";
 import "path.proto";
-import "common.proto";
 
 package hoppipolla.policy;
 
@@ -65,7 +63,8 @@ message ListPoliciesResponse {
 
 message ValidatePathRequest { 
   hoppipolla.path.Path path = 1; 
-  optional hoppipolla.common.Interval data_interval = 2;
+  string start_time = 2; // ISO formatted datetime
+  string end_time = 3;  // ISO formatted datetime
 }
 message ValidatePathResponse {
   string fingerprint = 1;
@@ -73,7 +72,7 @@ message ValidatePathResponse {
 }
 
 message GetLatestPolicyTimestampResponse { 
-  google.protobuf.Timestamp timestamp = 1; 
+  string timestamp = 1; // ISO formatted datetime 
 }
 
 message GetDefaultIssuerResponse {

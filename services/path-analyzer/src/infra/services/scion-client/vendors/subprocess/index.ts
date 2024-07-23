@@ -4,7 +4,9 @@ import { z } from "zod";
 
 import { config } from "src/config";
 import { IpAddress, IsdAs, PathStatus } from "src/domain/entities";
+import { InternalError } from "src/domain/errors";
 import { IScionClient, ShowpathsPathResult } from "src/domain/services";
+import logger from "src/logging";
 
 const exec = promisify(childPrcess.exec);
 
@@ -26,7 +28,7 @@ export class ScionSubprocessClient implements IScionClient {
    */
   async showpaths(destination: string): Promise<ShowpathsPathResult[]> {
     const command = [
-      "scion showpaths",
+      `${config.SCION_EXE_PATH} showpaths`,
       "--format json",
       "--extended",
       `--sciond ${this.sciondAddress}`,
@@ -34,27 +36,34 @@ export class ScionSubprocessClient implements IScionClient {
       destination,
     ];
 
-    const { stdout } = await exec(command.join(" "));
-    const json = JSON.parse(stdout);
-    const result = await showpathsOutputSchema.safeParseAsync(json);
+    logger.debug(`Executing sciond showpaths as ${this.sciondAddress}`);
 
-    // the result is missing paths if sciond does not find paths
-    if (!result.success) {
-      return [];
+    try {
+      const { stdout } = await exec(command.join(" "));
+      const json = JSON.parse(stdout);
+      const result = await showpathsOutputSchema.safeParseAsync(json);
+
+      // the result is missing paths if sciond does not find paths
+      if (!result.success) {
+        return [];
+      }
+
+      // TODO: validate string addresses
+      return result.data.paths.map((path) => ({
+        fingerprint: path.fingerprint,
+        status: statusToEnum(path.status),
+        src: result.data.local_isd_as as IsdAs,
+        dst: result.data.destination as IsdAs,
+        localIp: path.local_ip as IpAddress,
+        expiry: path.expiry,
+        sequence: path.sequence,
+        mtuBytes: path.mtu,
+        hops: parseHops(path),
+      }));
+    } catch (e) {
+      logger.debug(e);
+      throw new InternalError(`Cannot execute showpaths: ${e}`);
     }
-
-    // TODO: validate string addresses
-    return result.data.paths.map((path) => ({
-      fingerprint: path.fingerprint,
-      status: statusToEnum(path.status),
-      src: result.data.local_isd_as as IsdAs,
-      dst: result.data.destination as IsdAs,
-      localIp: path.local_ip as IpAddress,
-      expiry: path.expiry,
-      sequence: path.sequence,
-      mtuBytes: path.mtu,
-      hops: parseHops(path),
-    }));
 
     function statusToEnum(status: string) {
       switch (status) {
@@ -120,10 +129,10 @@ const showpathsOutputSchema = z.object({
       ),
       sequence: z.string(),
       next_hop: z.string(),
-      expiry: z.string().transform((s: string) => new Date(s)),
+      expiry: z.coerce.date(),
       mtu: z.number().positive(),
-      latency: z.array(z.number()).nullable(),
-      carbon_intensity: z.array(z.number()).nullable(),
+      latency: z.array(z.number()).optional().nullable(),
+      carbon_intensity: z.array(z.number()).optional().nullable(),
       // see https://github.com/scionproto/scion/blob/eacdeef5732b67dd5fda83f2cf28bef33c3a9f8d/private/app/path/pathprobe/paths.go#L44
       status: z.enum(["timeout", "alive", "unknown"]),
       local_ip: z.string().ip(),

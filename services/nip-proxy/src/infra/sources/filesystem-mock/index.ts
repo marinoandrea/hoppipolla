@@ -6,6 +6,8 @@ import {
   DataReading,
   EnergyReading,
   energyReadingSchema,
+  GeoReading,
+  geoReadingSchema,
   isdAsSchema,
   ReadingCollectionQuery,
 } from "src/domain/entities";
@@ -24,7 +26,8 @@ abstract class FilesystemMockReadingSource<TReading extends DataReading>
 
   async fetchAllInInterval(query: ReadingCollectionQuery): Promise<TReading[]> {
     const raw = await readFile(this.path, { encoding: "utf8" });
-    const validated = await this.schema.parseAsync(raw);
+    const json = JSON.parse(raw);
+    const validated = await this.schema.parseAsync(json);
     return validated[query.isdAs].filter(
       (reading) =>
         reading.collectedAt >= query.startTime &&
@@ -36,5 +39,11 @@ abstract class FilesystemMockReadingSource<TReading extends DataReading>
 export class FilesystemMockEnergyReadingSource extends FilesystemMockReadingSource<EnergyReading> {
   constructor(path: PathLike) {
     super(path, energyReadingSchema);
+  }
+}
+
+export class FilesystemMockGeoReadingSource extends FilesystemMockReadingSource<GeoReading> {
+  constructor(path: PathLike) {
+    super(path, geoReadingSchema);
   }
 }

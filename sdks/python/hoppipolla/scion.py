@@ -4,6 +4,7 @@ from .errors import HoppipollaScionError
 
 
 def ping(
+    scion_exe_path: str,
     address: str,
     sequence: str,
     n_packets: int,
@@ -43,14 +44,16 @@ def ping(
         Whether the ping was successful
     """
     command = [
-        "scion", "ping", address,
+        scion_exe_path, "ping", address,
         "-c", str(n_packets),
         "--sequence", sequence,
         "--sciond", sciond_address,
         "--timeout", f"{timeout_ms}ms"
     ]
 
-    process = subprocess.run(command)
+    print(" ".join(command))
+
+    process = subprocess.run(command, check=True)
 
     if process.returncode != 0:
         raise HoppipollaScionError(process.stderr)

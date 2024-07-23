@@ -1,4 +1,3 @@
-from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -29,10 +28,10 @@ class Path(_message.Message):
     src_isd_as: str
     dst_isd_as: str
     sequence: str
-    expiration: _timestamp_pb2.Timestamp
+    expiration: str
     mtu: int
     hops: _containers.RepeatedCompositeFieldContainer[Hop]
-    def __init__(self, fingerprint: _Optional[str] = ..., src_isd_as: _Optional[str] = ..., dst_isd_as: _Optional[str] = ..., sequence: _Optional[str] = ..., expiration: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., mtu: _Optional[int] = ..., hops: _Optional[_Iterable[_Union[Hop, _Mapping]]] = ...) -> None: ...
+    def __init__(self, fingerprint: _Optional[str] = ..., src_isd_as: _Optional[str] = ..., dst_isd_as: _Optional[str] = ..., sequence: _Optional[str] = ..., expiration: _Optional[str] = ..., mtu: _Optional[int] = ..., hops: _Optional[_Iterable[_Union[Hop, _Mapping]]] = ...) -> None: ...
 
 class GetPathForAddrRequest(_message.Message):
     __slots__ = ("destination",)

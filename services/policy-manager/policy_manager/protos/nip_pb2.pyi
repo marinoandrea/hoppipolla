@@ -1,5 +1,3 @@
-from google.protobuf import timestamp_pb2 as _timestamp_pb2
-import common_pb2 as _common_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -26,7 +24,7 @@ class EnergyReading(_message.Message):
     id: str
     isd_as: str
     machine_id: str
-    collected_at: _timestamp_pb2.Timestamp
+    collected_at: str
     energy_consumption_kWh: float
     cpu_usage_percentage: float
     memory_usage_percentage: float
@@ -37,18 +35,48 @@ class EnergyReading(_message.Message):
     carbon_emissions_kg: float
     renewable_energy_percentage: float
     energy_efficiency_rating: str
-    def __init__(self, id: _Optional[str] = ..., isd_as: _Optional[str] = ..., machine_id: _Optional[str] = ..., collected_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., energy_consumption_kWh: _Optional[float] = ..., cpu_usage_percentage: _Optional[float] = ..., memory_usage_percentage: _Optional[float] = ..., network_traffic_MB: _Optional[float] = ..., temperature_celsius: _Optional[float] = ..., power_source: _Optional[str] = ..., status: _Optional[str] = ..., carbon_emissions_kg: _Optional[float] = ..., renewable_energy_percentage: _Optional[float] = ..., energy_efficiency_rating: _Optional[str] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., isd_as: _Optional[str] = ..., machine_id: _Optional[str] = ..., collected_at: _Optional[str] = ..., energy_consumption_kWh: _Optional[float] = ..., cpu_usage_percentage: _Optional[float] = ..., memory_usage_percentage: _Optional[float] = ..., network_traffic_MB: _Optional[float] = ..., temperature_celsius: _Optional[float] = ..., power_source: _Optional[str] = ..., status: _Optional[str] = ..., carbon_emissions_kg: _Optional[float] = ..., renewable_energy_percentage: _Optional[float] = ..., energy_efficiency_rating: _Optional[str] = ...) -> None: ...
+
+class GeoReading(_message.Message):
+    __slots__ = ("id", "isd_as", "collected_at", "operating_country_codes")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    ISD_AS_FIELD_NUMBER: _ClassVar[int]
+    COLLECTED_AT_FIELD_NUMBER: _ClassVar[int]
+    OPERATING_COUNTRY_CODES_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    isd_as: str
+    collected_at: str
+    operating_country_codes: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, id: _Optional[str] = ..., isd_as: _Optional[str] = ..., collected_at: _Optional[str] = ..., operating_country_codes: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class GetEnergyReadingsRequest(_message.Message):
-    __slots__ = ("isd_as", "interval")
+    __slots__ = ("isd_as", "start_time", "end_time")
     ISD_AS_FIELD_NUMBER: _ClassVar[int]
-    INTERVAL_FIELD_NUMBER: _ClassVar[int]
+    START_TIME_FIELD_NUMBER: _ClassVar[int]
+    END_TIME_FIELD_NUMBER: _ClassVar[int]
     isd_as: str
-    interval: _common_pb2.Interval
-    def __init__(self, isd_as: _Optional[str] = ..., interval: _Optional[_Union[_common_pb2.Interval, _Mapping]] = ...) -> None: ...
+    start_time: str
+    end_time: str
+    def __init__(self, isd_as: _Optional[str] = ..., start_time: _Optional[str] = ..., end_time: _Optional[str] = ...) -> None: ...
 
 class GetEnergyReadingsResponse(_message.Message):
     __slots__ = ("data",)
     DATA_FIELD_NUMBER: _ClassVar[int]
     data: _containers.RepeatedCompositeFieldContainer[EnergyReading]
     def __init__(self, data: _Optional[_Iterable[_Union[EnergyReading, _Mapping]]] = ...) -> None: ...
+
+class GetGeoReadingsRequest(_message.Message):
+    __slots__ = ("isd_as", "start_time", "end_time")
+    ISD_AS_FIELD_NUMBER: _ClassVar[int]
+    START_TIME_FIELD_NUMBER: _ClassVar[int]
+    END_TIME_FIELD_NUMBER: _ClassVar[int]
+    isd_as: str
+    start_time: str
+    end_time: str
+    def __init__(self, isd_as: _Optional[str] = ..., start_time: _Optional[str] = ..., end_time: _Optional[str] = ...) -> None: ...
+
+class GetGeoReadingsResponse(_message.Message):
+    __slots__ = ("data",)
+    DATA_FIELD_NUMBER: _ClassVar[int]
+    data: _containers.RepeatedCompositeFieldContainer[GeoReading]
+    def __init__(self, data: _Optional[_Iterable[_Union[GeoReading, _Mapping]]] = ...) -> None: ...

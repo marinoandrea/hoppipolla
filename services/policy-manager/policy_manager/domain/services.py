@@ -18,7 +18,7 @@ class NipProxy(metaclass=ABCMeta):
             self,
             interval: TimeInterval,
             hop: Hop
-    ) -> list[HopReading]:
+    ) -> dict[str, list[HopReading]]:
         """
         Fetch data readings collected in the time interval for the provided hop.
 
@@ -140,7 +140,7 @@ class AspManager(metaclass=ABCMeta):
         self,
         policy: Policy,
         path: Path,
-        readings: list[HopReading]
+        readings: dict[str, list[HopReading]]  # TODO: better types
     ) -> bool:
         """
         Check whether a given SCION path complies with the provided policy.

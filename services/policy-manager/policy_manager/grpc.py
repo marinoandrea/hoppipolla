@@ -1,7 +1,7 @@
 import logging
+from datetime import datetime
 
 import grpc
-from google.protobuf.timestamp_pb2 import Timestamp
 from policy_manager.domain.entities import Hop, Identifier, Path, TimeInterval
 from policy_manager.domain.errors import InvalidInputError
 from policy_manager.domain.use_cases import (CreatePolicyInput,
@@ -48,6 +48,7 @@ class PolicyManagerGRPCServicer(PolicyManagerServicer):
         except InvalidInputError as e:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details(str(e))
+            logging.debug(e)
 
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)
@@ -107,22 +108,27 @@ class PolicyManagerGRPCServicer(PolicyManagerServicer):
         """
         response = ValidatePathResponse()
 
-        input_data = ValidatePathInput(
-            path=Path(
-                fingerprint=request.path.fingerprint,
-                isd_as_dst=request.path.dst_isd_as,
-                isd_as_src=request.path.src_isd_as,
-                hops=[Hop(
-                    isd_as=hop.isd_as,
-                    inbound_interface=hop.inbound_interface,
-                    outbound_interface=hop.outbound_interface
-                ) for hop in request.path.hops]
-            ),
-            interval=TimeInterval(
-                request.data_interval.start_time.ToDatetime(),
-                request.data_interval.end_time.ToDatetime(),
-            )
+        path = Path(
+            fingerprint=request.path.fingerprint,
+            isd_as_dst=request.path.dst_isd_as,
+            isd_as_src=request.path.src_isd_as,
+            hops=[Hop(
+                isd_as=hop.isd_as,
+                inbound_interface=hop.inbound_interface,
+                outbound_interface=hop.outbound_interface
+            ) for hop in request.path.hops]
         )
+
+        if request.start_time and request.end_time:
+            input_data = ValidatePathInput(
+                path=path,
+                interval=TimeInterval(
+                    datetime_start=datetime.fromisoformat(request.start_time),
+                    datetime_end=datetime.fromisoformat(request.end_time)
+                )
+            )
+        else:
+            input_data = ValidatePathInput(path=path)
 
         try:
             output = PolicyManagerService.execute_validate_path(input_data)
@@ -134,6 +140,7 @@ class PolicyManagerGRPCServicer(PolicyManagerServicer):
         except InvalidInputError as e:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details(str(e))
+            logging.debug(e)
 
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)
@@ -147,7 +154,9 @@ class PolicyManagerGRPCServicer(PolicyManagerServicer):
         try:
             output = PolicyManagerService.execute_get_latest_policy_timestamp()
             response = GetLatestPolicyTimestampResponse(
-                timestamp=Timestamp(seconds=int(output.timestamp()), nanos=0)
+                timestamp=output
+                .astimezone()
+                .isoformat(timespec="milliseconds")
             )
 
         except Exception as e:

@@ -8,7 +8,7 @@ import {
 import { AppDataSource } from ".";
 import { BaseModel, HopModel, NodeModel, PathModel } from "./models";
 
-import { MoreThan, QueryRunner, Repository } from "typeorm";
+import { LessThan, MoreThan, QueryRunner, Repository } from "typeorm";
 
 type Session = QueryRunner;
 
@@ -117,10 +117,11 @@ export class TypeOrmPathRepository
     model.expiresAt = entity.expiresAt;
     model.lastValidatedAt = entity.lastValidatedAt;
     model.valid = entity.valid;
+
     model.hops = entity.hops.map((h) => {
       const hModel = new HopModel();
 
-      hModel.node = new NodeModel();
+      hModel.node = hModel.node = new NodeModel();
       hModel.node.id = h.node.id;
       hModel.node.createdAt = h.node.createdAt;
       hModel.node.updatedAt = h.node.updatedAt;
@@ -168,6 +169,7 @@ export class TypeOrmPathRepository
         where: {
           dst,
           lastValidatedAt: MoreThan(minValidationTimestamp),
+          expiresAt: LessThan(new Date()),
           valid: true,
         },
       });

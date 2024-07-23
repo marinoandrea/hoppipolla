@@ -1,7 +1,6 @@
 import { ServerUnaryCall, sendUnaryData } from "@grpc/grpc-js";
 
 import logger from "./logging";
-import { google } from "./protos/google/protobuf/timestamp";
 import { hoppipolla as pb } from "./protos/nip";
 import { NipProxyService } from "./service";
 
@@ -36,9 +35,8 @@ export class NipProxyGrpcService extends pb.nip.UnimplementedNipProxyService {
 
       const output = await NipProxyService.executeGetAsEnergyData({
         isdAs: call.request.isd_as,
-        // FIXME: we lose precision here
-        startTime: new Date(call.request.interval.start_time.seconds),
-        endTime: new Date(call.request.interval.end_time.seconds),
+        startTime: new Date(call.request.start_time),
+        endTime: new Date(call.request.end_time),
       });
 
       response.data = output.map(
@@ -46,10 +44,7 @@ export class NipProxyGrpcService extends pb.nip.UnimplementedNipProxyService {
           new pb.nip.EnergyReading({
             id: reading.id,
             isd_as: reading.isdAs,
-            collected_at: new google.protobuf.Timestamp({
-              // FIXME: we lose precision here
-              seconds: Math.round(reading.collectedAt.getTime() / 1000),
-            }),
+            collected_at: reading.collectedAt.toISOString(),
             carbon_emissions_kg: reading.carbonEmissionsKg,
             cpu_usage_percentage: reading.cpuUsagePercentage,
             energy_consumption_kWh: reading.energyConsumptionKwh,
@@ -61,6 +56,36 @@ export class NipProxyGrpcService extends pb.nip.UnimplementedNipProxyService {
             renewable_energy_percentage: reading.renewableEnergyPercentage,
             status: reading.status,
             temperature_celsius: reading.temperatureCelsius,
+          })
+      );
+
+      return response;
+    });
+  }
+
+  GetGeoReadings(
+    call: ServerUnaryCall<
+      pb.nip.GetGeoReadingsRequest,
+      pb.nip.GetGeoReadingsResponse
+    >,
+    callback: sendUnaryData<pb.nip.GetGeoReadingsResponse>
+  ): void {
+    execute(call, callback, async () => {
+      const response = new pb.nip.GetGeoReadingsResponse();
+
+      const output = await NipProxyService.executeGetAsGeoData({
+        isdAs: call.request.isd_as,
+        startTime: new Date(call.request.start_time),
+        endTime: new Date(call.request.end_time),
+      });
+
+      response.data = output.map(
+        (reading) =>
+          new pb.nip.GeoReading({
+            id: reading.id,
+            isd_as: reading.isdAs,
+            collected_at: reading.collectedAt.toISOString(),
+            operating_country_codes: reading.operatingCountryCodes,
           })
       );
 

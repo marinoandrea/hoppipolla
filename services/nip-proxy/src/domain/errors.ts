@@ -19,13 +19,13 @@ export class InternalError extends Error {
   public static code = 500;
 }
 
-export function handleZodValidation<T extends z.ZodSchema>(
+export function handleZodValidation<T>(
   entity: string,
-  schema: T
+  parse: (data: unknown) => T
 ) {
   return (data: unknown) => {
     try {
-      return schema.parse(data);
+      return parse(data);
     } catch (e) {
       if (!(e instanceof z.ZodError)) {
         throw e;

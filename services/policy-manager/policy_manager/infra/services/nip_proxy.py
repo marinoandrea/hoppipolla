@@ -2,13 +2,13 @@ from typing import Any, Callable, Dict, Self, Type, TypeVar, cast
 
 import grpc
 from google.protobuf.json_format import MessageToDict
-from google.protobuf.timestamp_pb2 import Timestamp
 from policy_manager.config import config
 from policy_manager.domain.entities import Hop, HopReading, TimeInterval
 from policy_manager.domain.services import NipProxy
-from policy_manager.protos.common_pb2 import Interval
 from policy_manager.protos.nip_pb2 import (GetEnergyReadingsRequest,
-                                           GetEnergyReadingsResponse)
+                                           GetEnergyReadingsResponse,
+                                           GetGeoReadingsRequest,
+                                           GetGeoReadingsResponse)
 from policy_manager.protos.nip_pb2_grpc import NipProxyStub
 
 T = TypeVar('T')
@@ -34,19 +34,34 @@ class NipProxyGRPCService(NipProxy):
         self.client = NipProxyStub(self.channel)
 
     def get_readings_for_interval(
-            self, interval: TimeInterval, hop: Hop) -> list[HopReading]:
+            self, interval: TimeInterval, hop: Hop) -> dict[str, list[HopReading]]:
 
-        start_time = Timestamp()
-        start_time.FromDatetime(interval.datetime_start)
-        end_time = Timestamp()
-        end_time.FromDatetime(interval.datetime_end)
+        start_time = interval.datetime_start.astimezone().isoformat(timespec="milliseconds")
+        end_time = interval.datetime_end.astimezone().isoformat(timespec="milliseconds")
 
-        req = GetEnergyReadingsRequest(
+        energy_req = GetEnergyReadingsRequest(
             isd_as=hop.isd_as,
-            interval=Interval(start_time, end_time)
+            start_time=start_time,
+            end_time=end_time,
         )
 
-        res = cast(GetEnergyReadingsResponse,
-                   self.client.GetEnergyReadings(req))
+        energy_res = cast(
+            GetEnergyReadingsResponse,
+            self.client.GetEnergyReadings(energy_req)
+        )
 
-        return [MessageToDict(entry) for entry in res.data]
+        geo_req = GetGeoReadingsRequest(
+            isd_as=hop.isd_as,
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+        geo_res = cast(
+            GetGeoReadingsResponse,
+            self.client.GetGeoReadings(geo_req)
+        )
+
+        return {
+            "energy": [MessageToDict(entry) for entry in energy_res.data],
+            "geo": [MessageToDict(entry) for entry in geo_res.data],
+        }

@@ -18,14 +18,12 @@ type IpV6Address =
 
 /** String specialization for ISD-AS tuple addresses */
 export type IsdAs = `${number}-${string}:${string}:${string}`;
-const isdAsSchema = z
-  .string()
-  .regex(
-    /^[0-9]+-([0-9a-fA-F]{1,4}:){2}[0-9a-fA-F]{1,4}$/,
-    "invalid ISD-AS tuple"
-  );
-
-export const validateIsdAs = handleZodValidation("isdAs", isdAsSchema);
+const isdAsSchema = z.custom<IsdAs>(
+  (v) =>
+    typeof v === "string" &&
+    v.match(/^[0-9]+-([0-9a-fA-F]{1,4}:){2}[0-9a-fA-F]{1,4}$/)
+);
+export const validateIsdAs = handleZodValidation("isdAs", isdAsSchema.parse);
 
 const dateInThePastSchema = z
   .date()
@@ -42,7 +40,7 @@ const entityInputSchema = z
     path: ["createdAt"],
   });
 
-const validateEntity = handleZodValidation("Entity", entityInputSchema);
+const validateEntity = handleZodValidation("Entity", entityInputSchema.parse);
 
 type EntityInput = typeof entityInputSchema._input;
 
@@ -95,7 +93,10 @@ export abstract class Entity {
 
 const nodeInputSchema = z.object({ isdAs: isdAsSchema });
 
-export const validateNodeInput = handleZodValidation("Node", nodeInputSchema);
+export const validateNodeInput = handleZodValidation(
+  "Node",
+  nodeInputSchema.parse
+);
 
 type NodeInput = EntityInput & typeof nodeInputSchema._input;
 
@@ -106,7 +107,7 @@ export class Node extends Entity {
   constructor(data: NodeInput) {
     super(data);
     const validationResult = validateNodeInput(data);
-    this._isdAs = validationResult.data.isdAs as IsdAs;
+    this._isdAs = validationResult.isdAs as IsdAs;
   }
 
   /** ISD-AS address for the path hop */
@@ -149,7 +150,10 @@ const pathInputSchema = z.object({
   ),
 });
 
-export const validatePathInput = handleZodValidation("Path", pathInputSchema);
+export const validatePathInput = handleZodValidation(
+  "Path",
+  pathInputSchema.parse
+);
 
 type PathInput = EntityInput & typeof pathInputSchema._input;
 
@@ -171,16 +175,16 @@ export class Path extends Entity {
 
     const validationResult = validatePathInput(data);
 
-    this._fingerprint = validationResult.data.fingerprint;
-    this._src = validationResult.data.src as IsdAs;
-    this._dst = validationResult.data.dst as IsdAs;
-    this._localIp = validationResult.data.localIp as IpAddress;
-    this._mtuBytes = validationResult.data.mtuBytes;
-    this._expiresAt = validationResult.data.expiresAt;
-    this._status = validationResult.data.status;
-    this._lastValidatedAt = validationResult.data.lastValidatedAt;
-    this._valid = validationResult.data.valid;
-    this._hops = validationResult.data.hops;
+    this._fingerprint = validationResult.fingerprint;
+    this._src = validationResult.src as IsdAs;
+    this._dst = validationResult.dst as IsdAs;
+    this._localIp = validationResult.localIp as IpAddress;
+    this._mtuBytes = validationResult.mtuBytes;
+    this._expiresAt = validationResult.expiresAt;
+    this._status = validationResult.status;
+    this._lastValidatedAt = validationResult.lastValidatedAt;
+    this._valid = validationResult.valid;
+    this._hops = validationResult.hops;
   }
 
   /** Unique fingerprint of the path */
@@ -215,10 +219,44 @@ export class Path extends Entity {
    * Path string representation for hops as space separated tuples in the form ISD-AS#IF,IF.
    */
   public get sequence() {
-    return this.hops
+    const hops: {
+      inboundInterface: number;
+      outboundInterface: number;
+      isdAs: IsdAs;
+    }[] = [];
+
+    for (let i = 0; i < this.hops.length; i++) {
+      const inboundInterface = this.hops[i].inboundInterface;
+      const outboundInterface = this.hops[i].outboundInterface;
+      const isdAs = this.hops[i].node.isdAs;
+
+      // if this is the second instance of the ISD-AS, consider interface as outbound
+      if (i > 0 && this.hops[i - 1].node.isdAs == isdAs) {
+        hops[i - 1].outboundInterface = inboundInterface;
+        continue;
+      }
+
+      // if this is the first hop, consider interface as outbound
+      if (i == 0) {
+        hops.push({
+          isdAs,
+          inboundInterface: 0,
+          outboundInterface: outboundInterface,
+        });
+        continue;
+      }
+
+      // otherwise consider interface as inbound
+      hops.push({
+        isdAs,
+        inboundInterface: inboundInterface,
+        outboundInterface: 0,
+      });
+    }
+
+    return hops
       .map(
-        (hop) =>
-          `${hop.node.isdAs}#${hop.inboundInterface},${hop.outboundInterface}`
+        (hop) => `${hop.isdAs}#${hop.inboundInterface},${hop.outboundInterface}`
       )
       .join(" ");
   }

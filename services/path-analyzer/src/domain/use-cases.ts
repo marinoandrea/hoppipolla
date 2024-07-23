@@ -1,3 +1,4 @@
+import logger from "src/logging";
 import { Hop, Node, Path, validateIsdAs } from "./entities";
 import { INodeRepository, IPathRepository } from "./repositories";
 import { IPolicyManager, IScionClient, ShowpathsPathResult } from "./services";
@@ -18,10 +19,16 @@ export async function getPathForAddress(
   // query the database for already validated paths
   const latestPolicyTimestamp = await policyManager.getLatestPolicyTimestamp();
 
+  logger.debug(
+    `Latest policy update at: ${latestPolicyTimestamp.toISOString()}`
+  );
+
   const validPaths = await pathRepository.getValidPathsForDestination(
     validatedDestination,
     latestPolicyTimestamp
   );
+
+  logger.debug(`Cached valid paths: ${validPaths.length}`);
 
   const output = validPaths.find((p) => p.hops.length > 0);
   if (output) {
@@ -30,17 +37,21 @@ export async function getPathForAddress(
 
   // query SCION daemon for potential new paths to reach destination
   const showpathsResults = await scionClient.showpaths(validatedDestination);
-  const newPaths = await Promise.all(showpathsResults.map(buildPathFromResult));
+  let newPaths = await Promise.all(showpathsResults.map(buildPathFromResult));
+
+  logger.debug(`Found new potential paths: ${newPaths.length}`);
 
   // validate the paths using the policy manager
   const validationStartTimestamp = new Date();
-  await Promise.all(
+  newPaths = await Promise.all(
     newPaths.map(async (path) => {
-      const valid = await policyManager.validatePath(path);
       path.lastValidatedAt = validationStartTimestamp;
-      path.valid = valid;
+      path.valid = await policyManager.validatePath(path);
+      return path;
     })
   );
+
+  logger.debug(`Validated by policy-manager: ${newPaths.length}`);
 
   await pathRepository.addAll(newPaths);
 
@@ -63,14 +74,18 @@ export async function getPathForAddress(
       const inboundInterface = result.hops[i].inboundInterface;
       const outboundInterface = result.hops[i].outboundInterface;
 
-      // find or create the ISD-AS node entity
-      let node = await nodeRepository.getByIsdAs(isdAs);
-      if (!node) {
-        node = new Node({ isdAs });
-        await nodeRepository.add(node);
+      try {
+        // find or create the ISD-AS node entity
+        let node = await nodeRepository.getByIsdAs(isdAs);
+        if (!node) {
+          node = new Node({ isdAs });
+          await nodeRepository.add(node);
+        }
+        hops.push({ node, inboundInterface, outboundInterface });
+      } catch (e) {
+        logger.error(e);
+        throw e;
       }
-
-      hops.push({ node, inboundInterface, outboundInterface });
     }
 
     return new Path({ ...result, hops });

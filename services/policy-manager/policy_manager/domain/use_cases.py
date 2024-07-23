@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from functools import partial
@@ -40,20 +41,24 @@ def create_policy(
         raise InvalidInputError(
             "issuer_id", input_data.issuer_id, "Issuer does not exist")
 
+    logging.debug(f"Received publish request from issuer: {issuer.name}")
+
     try:
         asp_manager.check_syntax(input_data.statements)
     except ValueError:
         raise InvalidInputError(
             "statements", input_data.statements, "Invalid ASP syntax for policy")
 
-    new_policy = Policy(
+    policy = Policy(
         issuer=issuer,
         statements=input_data.statements,
         description=input_data.description
     )
-    policy_repository.add(new_policy)
+    policy_repository.add(policy)
 
-    return CreatePolicyOutput(policy=new_policy)
+    logging.debug(f"Created new policy: {policy.id}")
+
+    return CreatePolicyOutput(policy=policy)
 
 
 def generate_validation_default_interval():
@@ -84,10 +89,11 @@ def validate_path(
     """
     Check whether a provided path is valid given the active policies.
     """
-    def get_all_readings() -> list[HopReading]:
-        readings: list[HopReading] = []
+    def get_all_readings() -> dict[str, list[HopReading]]:
+        energy_readings: list[HopReading] = []
+        geo_readings: list[HopReading] = []
         try:
-            with ThreadPool(processes=len(input_data.path.hops)) as pool:
+            with ThreadPool(processes=max(1, len(input_data.path.hops))) as pool:
                 results = pool.map(
                     partial(
                         nip_proxy.get_readings_for_interval,
@@ -96,13 +102,22 @@ def validate_path(
                     input_data.path.hops
                 )
                 for result in results:
-                    readings.extend(result)
+                    energy_readings.extend(result["energy"])
+                    geo_readings.extend(result["geo"])
+
         except Exception as e:
             raise ExternalServiceError("NipClientService", str(e))
-        return readings
+
+        return {
+            "energy": energy_readings,
+            "geo": geo_readings
+        }
 
     active_policies = policy_repository.get_all_active()
     readings = get_all_readings()
+
+    logging.debug(f"Validating path: {input_data.path.isd_as_src}->{input_data.path.isd_as_dst}")
+    logging.debug(f"\tUsing interval: {input_data.interval.datetime_start}-{input_data.interval.datetime_start}")
 
     unsat_policies: set[Policy] = set()
 
@@ -122,7 +137,7 @@ def validate_path(
         while True:
             for unsat_policy in unsat_policies:
                 for other_policy in active_policies:
-                    if unsat_policy == other_policy:
+                    if unsat_policy.id == other_policy.id:
                         continue
 
                     result = meta_handle.resolve_conflicts(
@@ -134,7 +149,7 @@ def validate_path(
                             or result.policy_strong is None:
                         raise RuntimeError(f"Conflict between {unsat_policy} and {other_policy} cannot be solved")
 
-                    if result.policy_strong != unsat_policy:
+                    if result.policy_strong != unsat_policy and unsat_policy in remaining_unsat_policies:
                         remaining_unsat_policies.remove(unsat_policy)
 
             if len(unsat_policies) == len(remaining_unsat_policies):
@@ -149,13 +164,16 @@ def get_latest_policy_timestamp(
     policy_repository: PolicyRepository,
     meta_policy_repository: MetaPolicyRepository
 ) -> datetime:
-    latest_policy_tmp = policy_repository\
-        .get_max_created_at()\
-        .replace(tzinfo=timezone(offset=timedelta()))
-    latest_meta_policy_tmp = meta_policy_repository\
-        .get_max_created_at()\
-        .replace(tzinfo=timezone(offset=timedelta()))
-    return max(latest_policy_tmp, latest_meta_policy_tmp)
+    try:
+        latest_policy_tmp = policy_repository\
+            .get_max_created_at()\
+            .replace(tzinfo=timezone(offset=timedelta()))
+        latest_meta_policy_tmp = meta_policy_repository\
+            .get_max_created_at()\
+            .replace(tzinfo=timezone(offset=timedelta()))
+        return max(latest_policy_tmp, latest_meta_policy_tmp)
+    except Exception:
+        return datetime.now()
 
 
 def get_default_issuer(issuer_repository: IssuerRepository) -> Issuer:

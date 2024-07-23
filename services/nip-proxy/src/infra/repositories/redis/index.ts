@@ -2,7 +2,7 @@ import { createClient } from "redis";
 
 import { Repository } from "redis-om";
 import { config } from "src/config";
-import { energyReadingSchema } from "./schema";
+import { energyReadingSchema, geoReadingSchema } from "./schema";
 
 export const redisClient = createClient({ url: config.REDIS_URI });
 
@@ -19,4 +19,8 @@ export async function initRedisClient() {
   );
 
   await energyReadingRepository.createIndex();
+
+  const geoReadingRepository = new Repository(geoReadingSchema, redisClient);
+
+  await geoReadingRepository.createIndex();
 }

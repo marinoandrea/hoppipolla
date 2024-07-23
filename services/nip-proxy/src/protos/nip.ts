@@ -4,8 +4,6 @@
  * compiler version: 3.19.1
  * source: nip.proto
  * git: https://github.com/thesayyn/protoc-gen-ts */
-import * as dependency_1 from "./google/protobuf/timestamp";
-import * as dependency_2 from "./common";
 import * as pb_1 from "google-protobuf";
 import * as grpc_1 from "@grpc/grpc-js";
 export namespace hoppipolla.nip {
@@ -15,7 +13,7 @@ export namespace hoppipolla.nip {
             id?: string;
             isd_as?: string;
             machine_id?: string;
-            collected_at?: dependency_1.google.protobuf.Timestamp;
+            collected_at?: string;
             energy_consumption_kWh?: number;
             cpu_usage_percentage?: number;
             memory_usage_percentage?: number;
@@ -93,13 +91,10 @@ export namespace hoppipolla.nip {
             pb_1.Message.setField(this, 3, value);
         }
         get collected_at() {
-            return pb_1.Message.getWrapperField(this, dependency_1.google.protobuf.Timestamp, 4) as dependency_1.google.protobuf.Timestamp;
+            return pb_1.Message.getFieldWithDefault(this, 4, "") as string;
         }
-        set collected_at(value: dependency_1.google.protobuf.Timestamp) {
-            pb_1.Message.setWrapperField(this, 4, value);
-        }
-        get has_collected_at() {
-            return pb_1.Message.getField(this, 4) != null;
+        set collected_at(value: string) {
+            pb_1.Message.setField(this, 4, value);
         }
         get energy_consumption_kWh() {
             return pb_1.Message.getFieldWithDefault(this, 5, 0) as number;
@@ -165,7 +160,7 @@ export namespace hoppipolla.nip {
             id?: string;
             isd_as?: string;
             machine_id?: string;
-            collected_at?: ReturnType<typeof dependency_1.google.protobuf.Timestamp.prototype.toObject>;
+            collected_at?: string;
             energy_consumption_kWh?: number;
             cpu_usage_percentage?: number;
             memory_usage_percentage?: number;
@@ -188,7 +183,7 @@ export namespace hoppipolla.nip {
                 message.machine_id = data.machine_id;
             }
             if (data.collected_at != null) {
-                message.collected_at = dependency_1.google.protobuf.Timestamp.fromObject(data.collected_at);
+                message.collected_at = data.collected_at;
             }
             if (data.energy_consumption_kWh != null) {
                 message.energy_consumption_kWh = data.energy_consumption_kWh;
@@ -227,7 +222,7 @@ export namespace hoppipolla.nip {
                 id?: string;
                 isd_as?: string;
                 machine_id?: string;
-                collected_at?: ReturnType<typeof dependency_1.google.protobuf.Timestamp.prototype.toObject>;
+                collected_at?: string;
                 energy_consumption_kWh?: number;
                 cpu_usage_percentage?: number;
                 memory_usage_percentage?: number;
@@ -249,7 +244,7 @@ export namespace hoppipolla.nip {
                 data.machine_id = this.machine_id;
             }
             if (this.collected_at != null) {
-                data.collected_at = this.collected_at.toObject();
+                data.collected_at = this.collected_at;
             }
             if (this.energy_consumption_kWh != null) {
                 data.energy_consumption_kWh = this.energy_consumption_kWh;
@@ -293,8 +288,8 @@ export namespace hoppipolla.nip {
                 writer.writeString(2, this.isd_as);
             if (this.machine_id.length)
                 writer.writeString(3, this.machine_id);
-            if (this.has_collected_at)
-                writer.writeMessage(4, this.collected_at, () => this.collected_at.serialize(writer));
+            if (this.collected_at.length)
+                writer.writeString(4, this.collected_at);
             if (this.energy_consumption_kWh != 0)
                 writer.writeFloat(5, this.energy_consumption_kWh);
             if (this.cpu_usage_percentage != 0)
@@ -334,7 +329,7 @@ export namespace hoppipolla.nip {
                         message.machine_id = reader.readString();
                         break;
                     case 4:
-                        reader.readMessage(message.collected_at, () => message.collected_at = dependency_1.google.protobuf.Timestamp.deserialize(reader));
+                        message.collected_at = reader.readString();
                         break;
                     case 5:
                         message.energy_consumption_kWh = reader.readFloat();
@@ -378,11 +373,148 @@ export namespace hoppipolla.nip {
             return EnergyReading.deserialize(bytes);
         }
     }
+    export class GeoReading extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            id?: string;
+            isd_as?: string;
+            collected_at?: string;
+            operating_country_codes?: string[];
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [4], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("id" in data && data.id != undefined) {
+                    this.id = data.id;
+                }
+                if ("isd_as" in data && data.isd_as != undefined) {
+                    this.isd_as = data.isd_as;
+                }
+                if ("collected_at" in data && data.collected_at != undefined) {
+                    this.collected_at = data.collected_at;
+                }
+                if ("operating_country_codes" in data && data.operating_country_codes != undefined) {
+                    this.operating_country_codes = data.operating_country_codes;
+                }
+            }
+        }
+        get id() {
+            return pb_1.Message.getFieldWithDefault(this, 1, "") as string;
+        }
+        set id(value: string) {
+            pb_1.Message.setField(this, 1, value);
+        }
+        get isd_as() {
+            return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
+        }
+        set isd_as(value: string) {
+            pb_1.Message.setField(this, 2, value);
+        }
+        get collected_at() {
+            return pb_1.Message.getFieldWithDefault(this, 3, "") as string;
+        }
+        set collected_at(value: string) {
+            pb_1.Message.setField(this, 3, value);
+        }
+        get operating_country_codes() {
+            return pb_1.Message.getFieldWithDefault(this, 4, []) as string[];
+        }
+        set operating_country_codes(value: string[]) {
+            pb_1.Message.setField(this, 4, value);
+        }
+        static fromObject(data: {
+            id?: string;
+            isd_as?: string;
+            collected_at?: string;
+            operating_country_codes?: string[];
+        }): GeoReading {
+            const message = new GeoReading({});
+            if (data.id != null) {
+                message.id = data.id;
+            }
+            if (data.isd_as != null) {
+                message.isd_as = data.isd_as;
+            }
+            if (data.collected_at != null) {
+                message.collected_at = data.collected_at;
+            }
+            if (data.operating_country_codes != null) {
+                message.operating_country_codes = data.operating_country_codes;
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                id?: string;
+                isd_as?: string;
+                collected_at?: string;
+                operating_country_codes?: string[];
+            } = {};
+            if (this.id != null) {
+                data.id = this.id;
+            }
+            if (this.isd_as != null) {
+                data.isd_as = this.isd_as;
+            }
+            if (this.collected_at != null) {
+                data.collected_at = this.collected_at;
+            }
+            if (this.operating_country_codes != null) {
+                data.operating_country_codes = this.operating_country_codes;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.id.length)
+                writer.writeString(1, this.id);
+            if (this.isd_as.length)
+                writer.writeString(2, this.isd_as);
+            if (this.collected_at.length)
+                writer.writeString(3, this.collected_at);
+            if (this.operating_country_codes.length)
+                writer.writeRepeatedString(4, this.operating_country_codes);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): GeoReading {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new GeoReading();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        message.id = reader.readString();
+                        break;
+                    case 2:
+                        message.isd_as = reader.readString();
+                        break;
+                    case 3:
+                        message.collected_at = reader.readString();
+                        break;
+                    case 4:
+                        pb_1.Message.addToRepeatedField(message, 4, reader.readString());
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): GeoReading {
+            return GeoReading.deserialize(bytes);
+        }
+    }
     export class GetEnergyReadingsRequest extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
             isd_as?: string;
-            interval?: dependency_2.hoppipolla.common.Interval;
+            start_time?: string;
+            end_time?: string;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -390,8 +522,11 @@ export namespace hoppipolla.nip {
                 if ("isd_as" in data && data.isd_as != undefined) {
                     this.isd_as = data.isd_as;
                 }
-                if ("interval" in data && data.interval != undefined) {
-                    this.interval = data.interval;
+                if ("start_time" in data && data.start_time != undefined) {
+                    this.start_time = data.start_time;
+                }
+                if ("end_time" in data && data.end_time != undefined) {
+                    this.end_time = data.end_time;
                 }
             }
         }
@@ -401,38 +536,49 @@ export namespace hoppipolla.nip {
         set isd_as(value: string) {
             pb_1.Message.setField(this, 1, value);
         }
-        get interval() {
-            return pb_1.Message.getWrapperField(this, dependency_2.hoppipolla.common.Interval, 2) as dependency_2.hoppipolla.common.Interval;
+        get start_time() {
+            return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
         }
-        set interval(value: dependency_2.hoppipolla.common.Interval) {
-            pb_1.Message.setWrapperField(this, 2, value);
+        set start_time(value: string) {
+            pb_1.Message.setField(this, 2, value);
         }
-        get has_interval() {
-            return pb_1.Message.getField(this, 2) != null;
+        get end_time() {
+            return pb_1.Message.getFieldWithDefault(this, 3, "") as string;
+        }
+        set end_time(value: string) {
+            pb_1.Message.setField(this, 3, value);
         }
         static fromObject(data: {
             isd_as?: string;
-            interval?: ReturnType<typeof dependency_2.hoppipolla.common.Interval.prototype.toObject>;
+            start_time?: string;
+            end_time?: string;
         }): GetEnergyReadingsRequest {
             const message = new GetEnergyReadingsRequest({});
             if (data.isd_as != null) {
                 message.isd_as = data.isd_as;
             }
-            if (data.interval != null) {
-                message.interval = dependency_2.hoppipolla.common.Interval.fromObject(data.interval);
+            if (data.start_time != null) {
+                message.start_time = data.start_time;
+            }
+            if (data.end_time != null) {
+                message.end_time = data.end_time;
             }
             return message;
         }
         toObject() {
             const data: {
                 isd_as?: string;
-                interval?: ReturnType<typeof dependency_2.hoppipolla.common.Interval.prototype.toObject>;
+                start_time?: string;
+                end_time?: string;
             } = {};
             if (this.isd_as != null) {
                 data.isd_as = this.isd_as;
             }
-            if (this.interval != null) {
-                data.interval = this.interval.toObject();
+            if (this.start_time != null) {
+                data.start_time = this.start_time;
+            }
+            if (this.end_time != null) {
+                data.end_time = this.end_time;
             }
             return data;
         }
@@ -442,8 +588,10 @@ export namespace hoppipolla.nip {
             const writer = w || new pb_1.BinaryWriter();
             if (this.isd_as.length)
                 writer.writeString(1, this.isd_as);
-            if (this.has_interval)
-                writer.writeMessage(2, this.interval, () => this.interval.serialize(writer));
+            if (this.start_time.length)
+                writer.writeString(2, this.start_time);
+            if (this.end_time.length)
+                writer.writeString(3, this.end_time);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -457,7 +605,10 @@ export namespace hoppipolla.nip {
                         message.isd_as = reader.readString();
                         break;
                     case 2:
-                        reader.readMessage(message.interval, () => message.interval = dependency_2.hoppipolla.common.Interval.deserialize(reader));
+                        message.start_time = reader.readString();
+                        break;
+                    case 3:
+                        message.end_time = reader.readString();
                         break;
                     default: reader.skipField();
                 }
@@ -538,6 +689,186 @@ export namespace hoppipolla.nip {
             return GetEnergyReadingsResponse.deserialize(bytes);
         }
     }
+    export class GetGeoReadingsRequest extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            isd_as?: string;
+            start_time?: string;
+            end_time?: string;
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("isd_as" in data && data.isd_as != undefined) {
+                    this.isd_as = data.isd_as;
+                }
+                if ("start_time" in data && data.start_time != undefined) {
+                    this.start_time = data.start_time;
+                }
+                if ("end_time" in data && data.end_time != undefined) {
+                    this.end_time = data.end_time;
+                }
+            }
+        }
+        get isd_as() {
+            return pb_1.Message.getFieldWithDefault(this, 1, "") as string;
+        }
+        set isd_as(value: string) {
+            pb_1.Message.setField(this, 1, value);
+        }
+        get start_time() {
+            return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
+        }
+        set start_time(value: string) {
+            pb_1.Message.setField(this, 2, value);
+        }
+        get end_time() {
+            return pb_1.Message.getFieldWithDefault(this, 3, "") as string;
+        }
+        set end_time(value: string) {
+            pb_1.Message.setField(this, 3, value);
+        }
+        static fromObject(data: {
+            isd_as?: string;
+            start_time?: string;
+            end_time?: string;
+        }): GetGeoReadingsRequest {
+            const message = new GetGeoReadingsRequest({});
+            if (data.isd_as != null) {
+                message.isd_as = data.isd_as;
+            }
+            if (data.start_time != null) {
+                message.start_time = data.start_time;
+            }
+            if (data.end_time != null) {
+                message.end_time = data.end_time;
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                isd_as?: string;
+                start_time?: string;
+                end_time?: string;
+            } = {};
+            if (this.isd_as != null) {
+                data.isd_as = this.isd_as;
+            }
+            if (this.start_time != null) {
+                data.start_time = this.start_time;
+            }
+            if (this.end_time != null) {
+                data.end_time = this.end_time;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.isd_as.length)
+                writer.writeString(1, this.isd_as);
+            if (this.start_time.length)
+                writer.writeString(2, this.start_time);
+            if (this.end_time.length)
+                writer.writeString(3, this.end_time);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): GetGeoReadingsRequest {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new GetGeoReadingsRequest();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        message.isd_as = reader.readString();
+                        break;
+                    case 2:
+                        message.start_time = reader.readString();
+                        break;
+                    case 3:
+                        message.end_time = reader.readString();
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): GetGeoReadingsRequest {
+            return GetGeoReadingsRequest.deserialize(bytes);
+        }
+    }
+    export class GetGeoReadingsResponse extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            data?: GeoReading[];
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [1], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("data" in data && data.data != undefined) {
+                    this.data = data.data;
+                }
+            }
+        }
+        get data() {
+            return pb_1.Message.getRepeatedWrapperField(this, GeoReading, 1) as GeoReading[];
+        }
+        set data(value: GeoReading[]) {
+            pb_1.Message.setRepeatedWrapperField(this, 1, value);
+        }
+        static fromObject(data: {
+            data?: ReturnType<typeof GeoReading.prototype.toObject>[];
+        }): GetGeoReadingsResponse {
+            const message = new GetGeoReadingsResponse({});
+            if (data.data != null) {
+                message.data = data.data.map(item => GeoReading.fromObject(item));
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                data?: ReturnType<typeof GeoReading.prototype.toObject>[];
+            } = {};
+            if (this.data != null) {
+                data.data = this.data.map((item: GeoReading) => item.toObject());
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.data.length)
+                writer.writeRepeatedMessage(1, this.data, (item: GeoReading) => item.serialize(writer));
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): GetGeoReadingsResponse {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new GetGeoReadingsResponse();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        reader.readMessage(message.data, () => pb_1.Message.addToRepeatedWrapperField(message, 1, GeoReading.deserialize(reader), GeoReading));
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): GetGeoReadingsResponse {
+            return GetGeoReadingsResponse.deserialize(bytes);
+        }
+    }
     interface GrpcUnaryServiceInterface<P, R> {
         (message: P, metadata: grpc_1.Metadata, options: grpc_1.CallOptions, callback: grpc_1.requestCallback<R>): grpc_1.ClientUnaryCall;
         (message: P, metadata: grpc_1.Metadata, callback: grpc_1.requestCallback<R>): grpc_1.ClientUnaryCall;
@@ -572,10 +903,20 @@ export namespace hoppipolla.nip {
                 requestDeserialize: (bytes: Buffer) => GetEnergyReadingsRequest.deserialize(new Uint8Array(bytes)),
                 responseSerialize: (message: GetEnergyReadingsResponse) => Buffer.from(message.serialize()),
                 responseDeserialize: (bytes: Buffer) => GetEnergyReadingsResponse.deserialize(new Uint8Array(bytes))
+            },
+            GetGeoReadings: {
+                path: "/hoppipolla.nip.NipProxy/GetGeoReadings",
+                requestStream: false,
+                responseStream: false,
+                requestSerialize: (message: GetGeoReadingsRequest) => Buffer.from(message.serialize()),
+                requestDeserialize: (bytes: Buffer) => GetGeoReadingsRequest.deserialize(new Uint8Array(bytes)),
+                responseSerialize: (message: GetGeoReadingsResponse) => Buffer.from(message.serialize()),
+                responseDeserialize: (bytes: Buffer) => GetGeoReadingsResponse.deserialize(new Uint8Array(bytes))
             }
         };
         [method: string]: grpc_1.UntypedHandleCall;
         abstract GetEnergyReadings(call: grpc_1.ServerUnaryCall<GetEnergyReadingsRequest, GetEnergyReadingsResponse>, callback: grpc_1.sendUnaryData<GetEnergyReadingsResponse>): void;
+        abstract GetGeoReadings(call: grpc_1.ServerUnaryCall<GetGeoReadingsRequest, GetGeoReadingsResponse>, callback: grpc_1.sendUnaryData<GetGeoReadingsResponse>): void;
     }
     export class NipProxyClient extends grpc_1.makeGenericClientConstructor(UnimplementedNipProxyService.definition, "NipProxy", {}) {
         constructor(address: string, credentials: grpc_1.ChannelCredentials, options?: Partial<grpc_1.ChannelOptions>) {
@@ -583,6 +924,9 @@ export namespace hoppipolla.nip {
         }
         GetEnergyReadings: GrpcUnaryServiceInterface<GetEnergyReadingsRequest, GetEnergyReadingsResponse> = (message: GetEnergyReadingsRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<GetEnergyReadingsResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<GetEnergyReadingsResponse>, callback?: grpc_1.requestCallback<GetEnergyReadingsResponse>): grpc_1.ClientUnaryCall => {
             return super.GetEnergyReadings(message, metadata, options, callback);
+        };
+        GetGeoReadings: GrpcUnaryServiceInterface<GetGeoReadingsRequest, GetGeoReadingsResponse> = (message: GetGeoReadingsRequest, metadata: grpc_1.Metadata | grpc_1.CallOptions | grpc_1.requestCallback<GetGeoReadingsResponse>, options?: grpc_1.CallOptions | grpc_1.requestCallback<GetGeoReadingsResponse>, callback?: grpc_1.requestCallback<GetGeoReadingsResponse>): grpc_1.ClientUnaryCall => {
+            return super.GetGeoReadings(message, metadata, options, callback);
         };
     }
 }

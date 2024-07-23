@@ -4,7 +4,6 @@
  * compiler version: 3.19.1
  * source: path.proto
  * git: https://github.com/thesayyn/protoc-gen-ts */
-import * as dependency_1 from "./google/protobuf/timestamp";
 import * as pb_1 from "google-protobuf";
 import * as grpc_1 from "@grpc/grpc-js";
 export namespace hoppipolla.path {
@@ -128,7 +127,7 @@ export namespace hoppipolla.path {
             src_isd_as?: string;
             dst_isd_as?: string;
             sequence?: string;
-            expiration?: dependency_1.google.protobuf.Timestamp;
+            expiration?: string;
             mtu?: number;
             hops?: Hop[];
         }) {
@@ -183,13 +182,10 @@ export namespace hoppipolla.path {
             pb_1.Message.setField(this, 4, value);
         }
         get expiration() {
-            return pb_1.Message.getWrapperField(this, dependency_1.google.protobuf.Timestamp, 5) as dependency_1.google.protobuf.Timestamp;
+            return pb_1.Message.getFieldWithDefault(this, 5, "") as string;
         }
-        set expiration(value: dependency_1.google.protobuf.Timestamp) {
-            pb_1.Message.setWrapperField(this, 5, value);
-        }
-        get has_expiration() {
-            return pb_1.Message.getField(this, 5) != null;
+        set expiration(value: string) {
+            pb_1.Message.setField(this, 5, value);
         }
         get mtu() {
             return pb_1.Message.getFieldWithDefault(this, 6, 0) as number;
@@ -208,7 +204,7 @@ export namespace hoppipolla.path {
             src_isd_as?: string;
             dst_isd_as?: string;
             sequence?: string;
-            expiration?: ReturnType<typeof dependency_1.google.protobuf.Timestamp.prototype.toObject>;
+            expiration?: string;
             mtu?: number;
             hops?: ReturnType<typeof Hop.prototype.toObject>[];
         }): Path {
@@ -226,7 +222,7 @@ export namespace hoppipolla.path {
                 message.sequence = data.sequence;
             }
             if (data.expiration != null) {
-                message.expiration = dependency_1.google.protobuf.Timestamp.fromObject(data.expiration);
+                message.expiration = data.expiration;
             }
             if (data.mtu != null) {
                 message.mtu = data.mtu;
@@ -242,7 +238,7 @@ export namespace hoppipolla.path {
                 src_isd_as?: string;
                 dst_isd_as?: string;
                 sequence?: string;
-                expiration?: ReturnType<typeof dependency_1.google.protobuf.Timestamp.prototype.toObject>;
+                expiration?: string;
                 mtu?: number;
                 hops?: ReturnType<typeof Hop.prototype.toObject>[];
             } = {};
@@ -259,7 +255,7 @@ export namespace hoppipolla.path {
                 data.sequence = this.sequence;
             }
             if (this.expiration != null) {
-                data.expiration = this.expiration.toObject();
+                data.expiration = this.expiration;
             }
             if (this.mtu != null) {
                 data.mtu = this.mtu;
@@ -281,8 +277,8 @@ export namespace hoppipolla.path {
                 writer.writeString(3, this.dst_isd_as);
             if (this.sequence.length)
                 writer.writeString(4, this.sequence);
-            if (this.has_expiration)
-                writer.writeMessage(5, this.expiration, () => this.expiration.serialize(writer));
+            if (this.expiration.length)
+                writer.writeString(5, this.expiration);
             if (this.mtu != 0)
                 writer.writeUint64(6, this.mtu);
             if (this.hops.length)
@@ -309,7 +305,7 @@ export namespace hoppipolla.path {
                         message.sequence = reader.readString();
                         break;
                     case 5:
-                        reader.readMessage(message.expiration, () => message.expiration = dependency_1.google.protobuf.Timestamp.deserialize(reader));
+                        message.expiration = reader.readString();
                         break;
                     case 6:
                         message.mtu = reader.readUint64();

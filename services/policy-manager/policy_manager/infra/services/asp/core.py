@@ -1,8 +1,9 @@
+import logging
 import os
 from abc import ABCMeta
 from contextlib import contextmanager
 from functools import lru_cache
-from typing import Iterator, Self, Sequence
+from typing import Iterator, Self
 
 import clingo
 from policy_manager.domain.entities import HopReading, MetaPolicy, Path, Policy
@@ -10,9 +11,10 @@ from policy_manager.domain.services import (AspManager, AspMetaHandle,
                                             ConflictResolutionResult,
                                             ConflictResolutionStatus)
 
-from .grammar import (CollectedSymbol, ContainsSymbol, HoppipollaSymbol,
-                      HopReadingSymbol, HopSymbol, IssuerSymbol,
-                      OverridesSymbol, PathSymbol, PolicySymbol, ValidSymbol)
+from .grammar import (CollectedSymbol, ContainsSymbol, EnergyReadingSymbol,
+                      GeoReadingSymbol, HoppipollaSymbol, HopSymbol,
+                      IssuerSymbol, OverridesSymbol, PathSymbol, PolicySymbol,
+                      ValidSymbol)
 
 PATH_PRELUDE = os.path.join(os.path.dirname(__file__), "lps", "prelude.lp")
 PATH_PRELUDE_META = os.path.join(os.path.dirname(__file__), "lps", "prelude-meta.lp")
@@ -62,19 +64,25 @@ class HoppipollaClingoPolicyProgram(HoppipollaClingoProgram):
     def validate(
         self,
         path: Path,
-        readings: Sequence[HopReading]
+        readings: dict[str, list[HopReading]]
     ) -> bool:
         self.add(PathSymbol(path))
         for hop in path.hops:
             self.add(HopSymbol(hop))
             self.add(ContainsSymbol(path, hop))
-            for reading in filter(lambda r: r["isd_as"] == hop.isd_as, readings):
-                self.add(HopReadingSymbol(reading))
+            for reading in filter(lambda r: r["isdAs"] == hop.isd_as, readings["geo"]):
+                self.add(GeoReadingSymbol(reading))
                 self.add(CollectedSymbol(hop, reading))
-        self.add(ValidSymbol(path))
+            for reading in filter(lambda r: r["isdAs"] == hop.isd_as, readings["energy"]):
+                self.add(EnergyReadingSymbol(reading))
+                self.add(CollectedSymbol(hop, reading))
         self.control.ground()
-        result = self.control.solve()
-        return bool(result.satisfiable)
+        logging.debug(self)
+        with self.control.solve(yield_=True) as handle:
+            for model in handle:
+                if model.contains(ValidSymbol(path).to_clingo()[0]):
+                    return True
+        return False
 
 
 class HoppipollaClingoMetaPolicyProgram(HoppipollaClingoProgram, AspMetaHandle):
@@ -119,7 +127,7 @@ class HoppipollaClingoMetaPolicyProgram(HoppipollaClingoProgram, AspMetaHandle):
                         policy_weak=policy_a
                     )
                 # the issuers have equal power
-                elif a_overrides_b and b_overrides_a:
+                elif (a_overrides_b and b_overrides_a) or (policy_a.issuer.id == policy_b.issuer.id):
                     policy_latest = policy_a if policy_a.created_at > policy_b.created_at else policy_b
                     policy_oldest = policy_a if policy_a.created_at < policy_b.created_at else policy_b
                     return ConflictResolutionResult(
@@ -153,6 +161,7 @@ class ClingoAspManager(AspManager):
         self,
         policy: Policy,
         path: Path,
-        readings: list[HopReading]
+        readings: dict[str, list[HopReading]]
     ) -> bool:
-        return HoppipollaClingoPolicyProgram(policy).validate(path, readings)
+        program = HoppipollaClingoPolicyProgram(policy)
+        return program.validate(path, readings)

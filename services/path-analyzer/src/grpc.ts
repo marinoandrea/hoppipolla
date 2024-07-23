@@ -1,7 +1,6 @@
 import { ServerUnaryCall, sendUnaryData } from "@grpc/grpc-js";
 
 import logger from "./logging";
-import { google as googleTimestamp } from "./protos/google/protobuf/timestamp";
 import { hoppipolla as hoppipollaPath } from "./protos/path";
 import { PathAnalyzerService } from "./service";
 
@@ -13,12 +12,12 @@ function execute<TRequest, TResponse>(
   func()
     .then((res) => {
       logger.info(`${call.getPath()} OK`);
-      logger.debug(res);
+      logger.debug(`Response: ${res}`);
       callback(null, res);
     })
     .catch((err) => {
       logger.error(`${call.getPath()} ERROR`);
-      logger.debug(err);
+      logger.debug(`Error: ${err}`);
       callback(err, null);
     });
 }
@@ -46,9 +45,7 @@ export class PathAnalyzerGrpcService extends hoppipollaPath.path
           src_isd_as: output.src,
           sequence: output.sequence,
           mtu: output.mtuBytes,
-          expiration: new googleTimestamp.protobuf.Timestamp({
-            seconds: Math.round(output.expiresAt.getTime() / 1000),
-          }),
+          expiration: output.expiresAt.toISOString(),
           hops: output.hops.map(
             (hop) =>
               new hoppipollaPath.path.Hop({

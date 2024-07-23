@@ -1,7 +1,5 @@
 from google.protobuf import empty_pb2 as _empty_pb2
-from google.protobuf import timestamp_pb2 as _timestamp_pb2
 import path_pb2 as _path_pb2
-import common_pb2 as _common_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -74,12 +72,14 @@ class ListPoliciesResponse(_message.Message):
     def __init__(self, policies: _Optional[_Iterable[_Union[Policy, _Mapping]]] = ...) -> None: ...
 
 class ValidatePathRequest(_message.Message):
-    __slots__ = ("path", "data_interval")
+    __slots__ = ("path", "start_time", "end_time")
     PATH_FIELD_NUMBER: _ClassVar[int]
-    DATA_INTERVAL_FIELD_NUMBER: _ClassVar[int]
+    START_TIME_FIELD_NUMBER: _ClassVar[int]
+    END_TIME_FIELD_NUMBER: _ClassVar[int]
     path: _path_pb2.Path
-    data_interval: _common_pb2.Interval
-    def __init__(self, path: _Optional[_Union[_path_pb2.Path, _Mapping]] = ..., data_interval: _Optional[_Union[_common_pb2.Interval, _Mapping]] = ...) -> None: ...
+    start_time: str
+    end_time: str
+    def __init__(self, path: _Optional[_Union[_path_pb2.Path, _Mapping]] = ..., start_time: _Optional[str] = ..., end_time: _Optional[str] = ...) -> None: ...
 
 class ValidatePathResponse(_message.Message):
     __slots__ = ("fingerprint", "valid")
@@ -92,8 +92,8 @@ class ValidatePathResponse(_message.Message):
 class GetLatestPolicyTimestampResponse(_message.Message):
     __slots__ = ("timestamp",)
     TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
-    timestamp: _timestamp_pb2.Timestamp
-    def __init__(self, timestamp: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+    timestamp: str
+    def __init__(self, timestamp: _Optional[str] = ...) -> None: ...
 
 class GetDefaultIssuerResponse(_message.Message):
     __slots__ = ("id", "name", "description")

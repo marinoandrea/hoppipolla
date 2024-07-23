@@ -1,3 +1,4 @@
+import typing
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from typing import Sequence
@@ -63,7 +64,7 @@ class ValidSymbol(HoppipollaSymbol):
         return f'valid("{self.path.fingerprint}").'
 
 
-class HopReadingSymbol(HoppipollaSymbol):
+class EnergyReadingSymbol(HoppipollaSymbol):
 
     def __init__(self, reading: HopReading) -> None:
         self.reading = reading
@@ -77,9 +78,12 @@ class HopReadingSymbol(HoppipollaSymbol):
         for field in self.reading:
             if field == "id":
                 continue
-            parsed = self._parse_value(field)
-            value = clingo.Number(parsed) if type(parsed) is int\
-                else clingo.String(str(parsed))
+            elif field == "collectedAt":
+                dt = int(datetime.fromisoformat(str(self.reading[field])).timestamp())
+                value = clingo.Number(dt)
+            else:
+                parsed = self._parse_value(field)
+                value = clingo.Number(parsed) if type(parsed) is int else clingo.String(str(parsed))
             symbols.append(clingo.Function(field, [data_id_symbol, value]))
         return symbols
 
@@ -96,13 +100,76 @@ class HopReadingSymbol(HoppipollaSymbol):
 
     def __str__(self) -> str:
         lines = []
-        lines.append(f'data("{self.reading['id']}").')
+        lines.append(f'energyReading("{self.reading['id']}").')
         for field in self.reading:
             if field == "id":
                 continue
-            parsed = self._parse_value(field)
-            value = parsed if type(parsed) is int else f'"{parsed}"'
-            lines.append(f'{field}("{self.reading['id']}", {value}).')
+            elif field == "collectedAt":
+                dt = int(datetime.fromisoformat(str(self.reading[field])).timestamp())
+                lines.append(f'{field}("{self.reading['id']}", {dt}).')
+            else:
+                parsed = self._parse_value(field)
+                value = parsed if type(parsed) is int else f'"{parsed}"'
+                lines.append(f'{field}("{self.reading['id']}", {value}).')
+        return "\n".join(lines)
+
+
+class GeoReadingSymbol(HoppipollaSymbol):
+
+    def __init__(self, reading: HopReading) -> None:
+        self.reading = reading
+
+    def to_clingo(self) -> Sequence[clingo.Symbol]:
+        symbols: list[clingo.Symbol] = []
+
+        data_id_symbol = clingo.String(str(self.reading["id"]))
+        symbols.append(clingo.Function("data", [data_id_symbol]))
+
+        for field in self.reading:
+            if field == "id":
+                continue
+            elif field == "collectedAt":
+                dt = int(datetime.fromisoformat(str(self.reading[field])).timestamp())
+                value = clingo.Number(dt)
+                symbols.append(clingo.Function(field, [data_id_symbol, value]))
+            elif field == "operatingCountryCodes":
+                for code in typing.cast(list[str], self.reading[field]):
+                    symbols.append(clingo.Function(
+                        "operatingCountryCode", [data_id_symbol, clingo.String(str(code))]))
+            else:
+                parsed = self._parse_value(field)
+                value = clingo.Number(parsed) if type(parsed) is int else clingo.String(str(parsed))
+                symbols.append(clingo.Function(field, [data_id_symbol, value]))
+        return symbols
+
+    def _parse_value(self, field: str) -> int | str:
+        raw_value = self.reading[field]
+        if isinstance(raw_value, datetime):
+            return round(raw_value.timestamp())
+        elif type(raw_value) is int:
+            return raw_value
+        elif type(raw_value) is float:
+            return int(round(raw_value))
+        else:
+            return str(raw_value)
+
+    def __str__(self) -> str:
+        lines = []
+        lines.append(f'geoReading("{self.reading['id']}").')
+        for field in self.reading:
+            if field == "id":
+                continue
+            elif field == "operatingCountryCodes":
+                for code in typing.cast(list[str], self.reading[field]):
+                    lines.append(f'operatingCountryCode("{self.reading['id']}", "{code}").')
+                continue
+            elif field == "collectedAt":
+                dt = int(datetime.fromisoformat(str(self.reading[field])).timestamp())
+                lines.append(f'{field}("{self.reading['id']}", {dt}).')
+            else:
+                parsed = self._parse_value(field)
+                value = parsed if type(parsed) is int else f'"{parsed}"'
+                lines.append(f'{field}("{self.reading['id']}", {value}).')
         return "\n".join(lines)
 
 

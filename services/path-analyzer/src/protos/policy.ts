@@ -5,9 +5,7 @@
  * source: policy.proto
  * git: https://github.com/thesayyn/protoc-gen-ts */
 import * as dependency_1 from "./google/protobuf/empty";
-import * as dependency_2 from "./google/protobuf/timestamp";
-import * as dependency_3 from "./path";
-import * as dependency_4 from "./common";
+import * as dependency_2 from "./path";
 import * as pb_1 from "google-protobuf";
 import * as grpc_1 from "@grpc/grpc-js";
 export namespace hoppipolla.policy {
@@ -771,73 +769,78 @@ export namespace hoppipolla.policy {
         }
     }
     export class ValidatePathRequest extends pb_1.Message {
-        #one_of_decls: number[][] = [[2]];
-        constructor(data?: any[] | ({
-            path?: dependency_3.hoppipolla.path.Path;
-        } & (({
-            data_interval?: dependency_4.hoppipolla.common.Interval;
-        })))) {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            path?: dependency_2.hoppipolla.path.Path;
+            start_time?: string;
+            end_time?: string;
+        }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
             if (!Array.isArray(data) && typeof data == "object") {
                 if ("path" in data && data.path != undefined) {
                     this.path = data.path;
                 }
-                if ("data_interval" in data && data.data_interval != undefined) {
-                    this.data_interval = data.data_interval;
+                if ("start_time" in data && data.start_time != undefined) {
+                    this.start_time = data.start_time;
+                }
+                if ("end_time" in data && data.end_time != undefined) {
+                    this.end_time = data.end_time;
                 }
             }
         }
         get path() {
-            return pb_1.Message.getWrapperField(this, dependency_3.hoppipolla.path.Path, 1) as dependency_3.hoppipolla.path.Path;
+            return pb_1.Message.getWrapperField(this, dependency_2.hoppipolla.path.Path, 1) as dependency_2.hoppipolla.path.Path;
         }
-        set path(value: dependency_3.hoppipolla.path.Path) {
+        set path(value: dependency_2.hoppipolla.path.Path) {
             pb_1.Message.setWrapperField(this, 1, value);
         }
         get has_path() {
             return pb_1.Message.getField(this, 1) != null;
         }
-        get data_interval() {
-            return pb_1.Message.getWrapperField(this, dependency_4.hoppipolla.common.Interval, 2) as dependency_4.hoppipolla.common.Interval;
+        get start_time() {
+            return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
         }
-        set data_interval(value: dependency_4.hoppipolla.common.Interval) {
-            pb_1.Message.setOneofWrapperField(this, 2, this.#one_of_decls[0], value);
+        set start_time(value: string) {
+            pb_1.Message.setField(this, 2, value);
         }
-        get has_data_interval() {
-            return pb_1.Message.getField(this, 2) != null;
+        get end_time() {
+            return pb_1.Message.getFieldWithDefault(this, 3, "") as string;
         }
-        get _data_interval() {
-            const cases: {
-                [index: number]: "none" | "data_interval";
-            } = {
-                0: "none",
-                2: "data_interval"
-            };
-            return cases[pb_1.Message.computeOneofCase(this, [2])];
+        set end_time(value: string) {
+            pb_1.Message.setField(this, 3, value);
         }
         static fromObject(data: {
-            path?: ReturnType<typeof dependency_3.hoppipolla.path.Path.prototype.toObject>;
-            data_interval?: ReturnType<typeof dependency_4.hoppipolla.common.Interval.prototype.toObject>;
+            path?: ReturnType<typeof dependency_2.hoppipolla.path.Path.prototype.toObject>;
+            start_time?: string;
+            end_time?: string;
         }): ValidatePathRequest {
             const message = new ValidatePathRequest({});
             if (data.path != null) {
-                message.path = dependency_3.hoppipolla.path.Path.fromObject(data.path);
+                message.path = dependency_2.hoppipolla.path.Path.fromObject(data.path);
             }
-            if (data.data_interval != null) {
-                message.data_interval = dependency_4.hoppipolla.common.Interval.fromObject(data.data_interval);
+            if (data.start_time != null) {
+                message.start_time = data.start_time;
+            }
+            if (data.end_time != null) {
+                message.end_time = data.end_time;
             }
             return message;
         }
         toObject() {
             const data: {
-                path?: ReturnType<typeof dependency_3.hoppipolla.path.Path.prototype.toObject>;
-                data_interval?: ReturnType<typeof dependency_4.hoppipolla.common.Interval.prototype.toObject>;
+                path?: ReturnType<typeof dependency_2.hoppipolla.path.Path.prototype.toObject>;
+                start_time?: string;
+                end_time?: string;
             } = {};
             if (this.path != null) {
                 data.path = this.path.toObject();
             }
-            if (this.data_interval != null) {
-                data.data_interval = this.data_interval.toObject();
+            if (this.start_time != null) {
+                data.start_time = this.start_time;
+            }
+            if (this.end_time != null) {
+                data.end_time = this.end_time;
             }
             return data;
         }
@@ -847,8 +850,10 @@ export namespace hoppipolla.policy {
             const writer = w || new pb_1.BinaryWriter();
             if (this.has_path)
                 writer.writeMessage(1, this.path, () => this.path.serialize(writer));
-            if (this.has_data_interval)
-                writer.writeMessage(2, this.data_interval, () => this.data_interval.serialize(writer));
+            if (this.start_time.length)
+                writer.writeString(2, this.start_time);
+            if (this.end_time.length)
+                writer.writeString(3, this.end_time);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -859,10 +864,13 @@ export namespace hoppipolla.policy {
                     break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        reader.readMessage(message.path, () => message.path = dependency_3.hoppipolla.path.Path.deserialize(reader));
+                        reader.readMessage(message.path, () => message.path = dependency_2.hoppipolla.path.Path.deserialize(reader));
                         break;
                     case 2:
-                        reader.readMessage(message.data_interval, () => message.data_interval = dependency_4.hoppipolla.common.Interval.deserialize(reader));
+                        message.start_time = reader.readString();
+                        break;
+                    case 3:
+                        message.end_time = reader.readString();
                         break;
                     default: reader.skipField();
                 }
@@ -969,7 +977,7 @@ export namespace hoppipolla.policy {
     export class GetLatestPolicyTimestampResponse extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
-            timestamp?: dependency_2.google.protobuf.Timestamp;
+            timestamp?: string;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -980,29 +988,26 @@ export namespace hoppipolla.policy {
             }
         }
         get timestamp() {
-            return pb_1.Message.getWrapperField(this, dependency_2.google.protobuf.Timestamp, 1) as dependency_2.google.protobuf.Timestamp;
+            return pb_1.Message.getFieldWithDefault(this, 1, "") as string;
         }
-        set timestamp(value: dependency_2.google.protobuf.Timestamp) {
-            pb_1.Message.setWrapperField(this, 1, value);
-        }
-        get has_timestamp() {
-            return pb_1.Message.getField(this, 1) != null;
+        set timestamp(value: string) {
+            pb_1.Message.setField(this, 1, value);
         }
         static fromObject(data: {
-            timestamp?: ReturnType<typeof dependency_2.google.protobuf.Timestamp.prototype.toObject>;
+            timestamp?: string;
         }): GetLatestPolicyTimestampResponse {
             const message = new GetLatestPolicyTimestampResponse({});
             if (data.timestamp != null) {
-                message.timestamp = dependency_2.google.protobuf.Timestamp.fromObject(data.timestamp);
+                message.timestamp = data.timestamp;
             }
             return message;
         }
         toObject() {
             const data: {
-                timestamp?: ReturnType<typeof dependency_2.google.protobuf.Timestamp.prototype.toObject>;
+                timestamp?: string;
             } = {};
             if (this.timestamp != null) {
-                data.timestamp = this.timestamp.toObject();
+                data.timestamp = this.timestamp;
             }
             return data;
         }
@@ -1010,8 +1015,8 @@ export namespace hoppipolla.policy {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.has_timestamp)
-                writer.writeMessage(1, this.timestamp, () => this.timestamp.serialize(writer));
+            if (this.timestamp.length)
+                writer.writeString(1, this.timestamp);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -1022,7 +1027,7 @@ export namespace hoppipolla.policy {
                     break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        reader.readMessage(message.timestamp, () => message.timestamp = dependency_2.google.protobuf.Timestamp.deserialize(reader));
+                        message.timestamp = reader.readString();
                         break;
                     default: reader.skipField();
                 }

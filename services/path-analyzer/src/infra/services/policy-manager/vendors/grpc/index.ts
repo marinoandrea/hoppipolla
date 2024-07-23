@@ -6,7 +6,9 @@ import grpc, {
 import { promisify } from "util";
 
 import { Path } from "src/domain/entities";
+import { InternalError } from "src/domain/errors";
 import { IPolicyManager } from "src/domain/services";
+import logger from "src/logging";
 import { google as googlePbEmpty } from "src/protos/google/protobuf/empty";
 import { hoppipolla as pathPb } from "src/protos/path";
 import { hoppipolla as policyPb } from "src/protos/policy";
@@ -45,19 +47,41 @@ export class PolicyManagerGrpcClient implements IPolicyManager {
       throw new Error();
     }
 
-    return new Date(res.timestamp.seconds);
+    return new Date(res.timestamp);
   }
 
   async validatePath(path: Path): Promise<boolean> {
     const req = new policyPb.policy.ValidatePathRequest({
-      path: new pathPb.path.Path({ ...path }),
+      path: new pathPb.path.Path({
+        dst_isd_as: path.dst,
+        src_isd_as: path.src,
+        expiration: path.expiresAt.toISOString(),
+        mtu: path.mtuBytes,
+        fingerprint: path.fingerprint,
+        sequence: path.sequence,
+        hops: path.hops.map(
+          (hop) =>
+            new pathPb.path.Hop({
+              isd_as: hop.node.isdAs,
+              inbound_interface: hop.inboundInterface,
+              outbound_interface: hop.outboundInterface,
+            })
+        ),
+      }),
     });
-    const res = await call(this.client.ValidatePath, req);
 
-    if (!res) {
-      throw new Error();
+    try {
+      const res = await call(this.client.ValidatePath, req);
+
+      if (!res) {
+        logger.error("No response from policy-manager");
+        throw new InternalError("No response from policy-manager");
+      }
+
+      return res.valid;
+    } catch (e) {
+      logger.error("No response from policy-manager");
+      throw new InternalError("No response from policy-manager");
     }
-
-    return res.valid;
   }
 }

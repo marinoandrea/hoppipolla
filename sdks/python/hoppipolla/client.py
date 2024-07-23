@@ -2,6 +2,8 @@ import logging
 from dataclasses import dataclass
 from typing import Self
 
+from hoppipolla.errors import HoppipollaScionError
+
 from . import scion
 from .grpc import GRPCPathAnalyzerClient, GRPCPolicyManagerClient
 from .services import PathAnalyzerClient, PolicyManagerClient
@@ -27,6 +29,11 @@ class HoppipollaClientConfig:
     sciond = ConnectionConfig("127.0.0.1:30255")
     """
     Connection configuration for the SCION daemon service.
+    """
+
+    scion_exe_path = "scion"
+    """
+    Path to the scion executable or alias for the command.
     """
 
     logger = LoggingConfig()
@@ -200,6 +207,7 @@ class HoppipollaClient:
             return PingResult(success=False, path=None)
 
         success = scion.ping(
+            self.config.scion_exe_path,
             address,
             valid_path.sequence,
             n_packets,

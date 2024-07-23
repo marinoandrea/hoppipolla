@@ -3,14 +3,16 @@ import { Repository, Schema } from "redis-om";
 import {
   DataReading,
   EnergyReading,
+  GeoReading,
   IsdAs,
   ReadingCollectionQuery,
   validateEnergyReading,
+  validateGeoReading,
 } from "src/domain/entities";
 import { IReadingCollectionRepository } from "src/domain/repositories";
 
 import { RedisClient } from ".";
-import { energyReadingSchema } from "./schema";
+import { energyReadingSchema, geoReadingSchema } from "./schema";
 
 abstract class RedisReadingCollectionRepository<TReading extends DataReading>
   implements IReadingCollectionRepository<TReading>
@@ -56,7 +58,16 @@ export class RedisEnergyReadingRepository extends RedisReadingCollectionReposito
   }
 
   mapHashToReading(hash: Record<string, unknown>) {
-    // TODO: better persistance validation error handling
     return validateEnergyReading(hash);
+  }
+}
+
+export class RedisGeoReadingRepository extends RedisReadingCollectionRepository<GeoReading> {
+  constructor(client: RedisClient) {
+    super(client, geoReadingSchema);
+  }
+
+  mapHashToReading(hash: Record<string, unknown>) {
+    return validateGeoReading(hash);
   }
 }

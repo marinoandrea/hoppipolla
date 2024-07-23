@@ -7,8 +7,7 @@ npx grpc_tools_node_protoc \
     --ts_out=grpc_js:$GENERATED_PATH \
     --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts \
     ../../protos/path.proto \
-    ../../protos/policy.proto \
-    ../../protos/common.proto
+    ../../protos/policy.proto
 
 
 add_line_to_file() {

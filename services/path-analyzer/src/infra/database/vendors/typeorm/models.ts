@@ -2,15 +2,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinTable,
-  ManyToMany,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryColumn,
   UpdateDateColumn,
 } from "typeorm";
 
-import { PathStatus } from "src/domain/entities";
+import { IsdAs, PathStatus } from "src/domain/entities";
 
 @Entity({ synchronize: false })
 export abstract class BaseModel {
@@ -27,9 +26,9 @@ export abstract class BaseModel {
 @Entity({ name: "nodes" })
 export class NodeModel extends BaseModel {
   @Column()
-  isdAs!: string;
+  isdAs!: IsdAs;
 
-  @OneToMany(() => HopModel, (hop) => hop.node)
+  @OneToMany(() => HopModel, (hop) => hop.path)
   hops!: HopModel[];
 }
 
@@ -39,10 +38,10 @@ export class PathModel extends BaseModel {
   fingerprint!: string;
 
   @Column()
-  src!: string;
+  src!: IsdAs;
 
   @Column()
-  dst!: string;
+  dst!: IsdAs;
 
   @Column()
   localIp!: string;
@@ -66,29 +65,26 @@ export class PathModel extends BaseModel {
   @Column({ default: false })
   valid!: boolean;
 
-  @ManyToMany(() => HopModel, (hop) => hop.paths, {
+  @OneToMany(() => HopModel, (hop) => hop.path, {
     eager: true,
-    cascade: true,
+    cascade: ["insert"],
   })
-  @JoinTable()
   hops!: HopModel[];
 }
 
 @Entity({ name: "hops" })
-export class HopModel {
-  @PrimaryColumn({ default: 0 })
+export class HopModel extends BaseModel {
+  @Column()
   inboundInterface!: number;
 
-  @PrimaryColumn({ default: 0 })
+  @Column()
   outboundInterface!: number;
 
-  @PrimaryColumn()
-  nodeId!: string;
-
-  @ManyToOne(() => NodeModel, (node) => node.hops, { eager: true })
-  @JoinTable()
+  @ManyToOne(() => NodeModel, { eager: true, cascade: ["insert"] })
+  @JoinColumn({ name: "nodeId" })
   node!: NodeModel;
 
-  @ManyToMany(() => PathModel, (path) => path.hops)
-  paths!: PathModel[];
+  @ManyToOne(() => PathModel, (path) => path.hops)
+  @JoinColumn({ name: "pathId" })
+  path!: PathModel;
 }

@@ -15,7 +15,7 @@ export const isdAsSchema = z
   );
 export type IsdAs = z.infer<typeof isdAsSchema>;
 
-const dateInThePastSchema = z
+const dateInThePastSchema = z.coerce
   .date()
   .refine((d) => d <= new Date(), { message: "date cannot be in the future" });
 
@@ -31,7 +31,7 @@ export type ReadingCollectionQuery = z.infer<
 
 export const validateReadingCollectionQuery = handleZodValidation(
   "ReadingCollectionQuery",
-  readingCollectionQuerySchema
+  readingCollectionQuerySchema.parse
 );
 
 const dataReadingSchema = z.object({
@@ -63,7 +63,7 @@ export enum MachineStatus {
   OFF = "off",
 }
 
-const percentageSchema = z.number().min(0).max(1);
+const percentageSchema = z.number().gte(0).lte(100);
 
 export const energyReadingSchema = z
   .object({
@@ -131,5 +131,21 @@ export type EnergyReading = z.infer<typeof energyReadingSchema>;
 
 export const validateEnergyReading = handleZodValidation(
   "EnergyReading",
-  energyReadingSchema
+  energyReadingSchema.parse
+);
+
+export const geoReadingSchema = z
+  .object({
+    operatingCountryCodes: z
+      .array(z.string().length(2))
+      .describe("Codes of the countries in which the AS operates"),
+  })
+  .merge(dataReadingSchema)
+  .readonly();
+
+export type GeoReading = z.infer<typeof geoReadingSchema>;
+
+export const validateGeoReading = handleZodValidation(
+  "GeoReading",
+  geoReadingSchema.parse
 );

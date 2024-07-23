@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/timestamp.proto";
-
 package hoppipolla.path;
 
 // SCION network hop in a path
@@ -21,8 +19,8 @@ message Path {
   string dst_isd_as = 3;
   // string representation of the path hops
   string sequence = 4;
-  // date and time of path expiration
-  google.protobuf.Timestamp expiration = 5;
+  // ISO formatted date and time of path expiration
+  string expiration = 5;
   // maximum transmission unit expressed in bytes
   uint64 mtu = 6;
   // list of hops between source and destination
