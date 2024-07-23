@@ -1,10 +1,22 @@
-FROM node:lts-slim as base
+FROM node:lts-slim as base-node
 
 RUN apt-get -qy update && apt-get -qy install openssl
 
 ###
 
-FROM base as builder
+FROM golang:1.21-bookworm as base-scion
+
+RUN apt-get -qy update && apt-get -qy install git
+
+WORKDIR /scion
+
+RUN git clone https://github.com/scionproto/scion; \
+    cd scion; \
+    go build -o bin/ ./...
+
+###
+
+FROM base-node as builder
 
 WORKDIR /build
 
@@ -20,9 +32,13 @@ RUN npm run build
 
 ###
 
-FROM base AS runtime
+FROM base-node AS runtime
 
 WORKDIR /app
+
+COPY --from=base-scion /scion /
+
+ENV SCION_EXE_PATH ./scion/bin/scion
 
 COPY package.json package-lock.json ./
 

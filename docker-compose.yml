@@ -9,7 +9,8 @@ services:
       - NODE_ENV=${HOPPIPOLLA_ENV:-development}
       - HOST=${HOPPIPOLLA_PATH_ANALYZER_HOST:-0.0.0.0}
       - PORT=${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}
-      - SCIOND_URI=${HOPPIPOLLA_SCIOND_URI}
+      - SCIOND_URI=sciondhost:${HOPPIPOLLA_SCIOND_PORT}
+      - SCION_EXE_PATH=${HOPPIPOLLA_SCIOND_URI:-/scion/bin/scion}
       - DATABASE_URI=/var/lib/hoppipolla/path-analyzer/sqlite.db
       - POLICY_MANAGER_URI=policy-manager:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}
       - MAX_PATHS_BATCH=${HOPPIPOLLA_PATH_ANALYZER_MAX_PATHS_BATCH:-10}
@@ -19,6 +20,8 @@ services:
       - 127.0.0.1:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}
     networks:
       - hoppipolla
+    extra_hosts:
+      sciondhost: ${HOPPIPOLLA_SCIOND_HOST}
 
   policy-manager:
     build:
@@ -90,4 +93,4 @@ services:
 
 networks:
   hoppipolla:
-    driver: bridge
+    driver: host
