@@ -30,6 +30,9 @@ the selected scenario.
 The scenarios are meant for testing the framework, therefore the user should
 setup a local SCION network following [this guide](https://docs.scion.org/en/latest/dev/run.html).
 
+In order to allow SCION to run with `docker compose`, make sure to also run
+`make docker-images` after you built the SCION project.
+
 Once you have installed SCION locally, you should set the `HOPPIPOLLA_SCION_HOME`
 variable to wherever your [`scion`](https://github.com/scionproto/scion) source
 code has been cloned. You can do this in a `.env` file that must be placed in
