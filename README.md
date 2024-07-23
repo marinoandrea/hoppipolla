@@ -24,13 +24,16 @@ SCION network.
 An example of such policy in natural language:
 
 ```
-Do not route network traffic through nodes that are located in country X
+Do not route network traffic through nodes that operate in country X
 ```
 
 Which, using the Hoppipolla-specific ASP syntax would look like:
 
 ```
--valid(Path) :- country(Hop, "X"), hop(Hop), path(Path), contains(Path, Hop).
+-valid(Path) :- CountryCode == "X",
+    operatingCountryCode(GeoReading, CountryCode),
+    latestGeoDataCollected(Hop, GeoReading),
+    contains(Path, Hop).
 ```
 
 The framework is constituted by a suite of services and the language-specific
@@ -63,7 +66,7 @@ services in the [`.env.example`](.env.example) file.
 > the address of the SCION daemon (e.g., 127.0.0.1:30255).
 
 The repository contains a [`docker-compose.yml`](docker-compose.yml) file which
-runs all the necessary services. You can sping up Hoppipolla on your machine
+runs all the necessary services. You can spin up Hoppipolla on your machine
 simply by running:
 
 ```
@@ -80,17 +83,27 @@ docker compose up
 The following snippet shows a simple usage of the Python SDK:
 
 ```python
+policy = '''
+-valid(Path) :- @listContains(CountryCodes, "X"),
+    operatingCountryCodes(GeoReading, CountryCodes),
+    latestGeoReading(Hop, GeoReading),
+    hasGeoReading(Hop, GeoReading),
+    contains(Path, Hop),
+    geoReading(GeoReading),
+    hop(Hop),
+    path(Path).
+'''
+
 config = hp.HoppipollaClientConfig() # default values
 client = hp.HoppipollaClient.from_config(config)
 
 issuer = client.get_default_issuer()
 
-policy1 = client.publish_policy(
-    issuer,
-    '-valid(Path) :- country(Hop, "X"), hop(Hop), path(Path), contains(Path, Hop).'
-)
+policy1 = client.publish_policy(issuer, policy)
 
 result = client.ping("1-ff00:0:110,10.0.0.1")
+
+print(result)
 ```
 
 ## License
