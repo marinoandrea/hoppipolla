@@ -52,7 +52,7 @@
     "@grpc/grpc-js": "^1.10.10",
     "google-protobuf": "^3.21.2",
     "redis": "^4.6.15",
-    "redis-om": "^0.4.6",
+    "redis-om": "^0.4.7",
     "reflect-metadata": "^0.2.2",
     "uuid": "^10.0.0",
     "winston": "^3.13.0",
