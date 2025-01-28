@@ -1,35 +1,37 @@
-FROM python:3.12-bookworm AS builder
+FROM lukemathwalker/cargo-chef:latest as chef
 
 WORKDIR /app
-
-RUN pip install pipx
-RUN pipx install poetry==1.8.3
-
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1 \
-    POETRY_VIRTUALENVS_OPTIONS_ALWAYS_COPY=1 \
-    POETRY_VIRTUALENVS_OPTIONS_NO_PIP=1 \
-    POETRY_INSTALLER_PARALLEL=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache \
-    PATH=/root/.local/bin:$PATH
-
-COPY pyproject.toml poetry.lock ./
-
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR \
-    poetry install --without dev --sync --no-root
 
 ###
 
-FROM python:3.12-slim-bookworm AS runtime
+FROM chef AS planner
+
+COPY ./Cargo.toml ./Cargo.lock ./
+
+COPY ./src ./src
+
+RUN cargo chef prepare
+
+### 
+
+FROM chef AS builder
+
+COPY --from=planner /app/recipe.json .
+
+RUN cargo chef cook --release
+
+COPY . .
+
+RUN cargo build --release
+
+RUN mv ./target/release/<your-crate> ./app
+
+###
+
+FROM debian:stable-slim AS runtime
 
 WORKDIR /app
 
-ENV VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
+COPY --from=builder /app/app /usr/local/bin/
 
-COPY policy_manager ./policy_manager
-
-COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-
-ENTRYPOINT ["python", "-m", "policy_manager.main"]
+ENTRYPOINT ["/usr/local/bin/app"]
