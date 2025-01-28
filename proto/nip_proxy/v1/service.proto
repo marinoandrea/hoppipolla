@@ -32,7 +32,7 @@ message LinkMetadata {
 
 message NodeMetadata {
   string name = 1;
-  string as = 2;
+  string node = 2;
   optional bool value_bool = 3;
   optional int32 value_int32 = 4;
   optional string value_string = 5;

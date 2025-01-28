@@ -30,7 +30,7 @@ func FromPBToMetadataRequest(input *pb.GetMetadataRequest) *sources.MetadataRequ
 func FromNodeMetadataToPB(input sources.NodeMetadata) *pb.NodeMetadata {
 	return &pb.NodeMetadata{
 		Name:        input.Name,
-		As:          input.As,
+		Node:        input.Node,
 		ValueBool:   input.ValueBool,
 		ValueInt32:  input.ValueInt32,
 		ValueString: input.ValueString,

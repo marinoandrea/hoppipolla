@@ -29,7 +29,7 @@ type LinkMetadata struct {
 
 type NodeMetadata struct {
 	Name        string
-	As          string
+	Node        string
 	ValueBool   *bool
 	ValueInt32  *int32
 	ValueString *string

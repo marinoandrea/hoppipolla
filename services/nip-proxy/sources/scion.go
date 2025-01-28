@@ -142,7 +142,7 @@ func (s ScionNipSource) GetMetadata(ctx context.Context, req *pb.GetMetadataRequ
 			for _, country := range countries {
 				out.NodeInfo = append(out.NodeInfo, NodeMetadata{
 					Name:        "operates",
-					As:          current_itf.IA.String(),
+					Node:        current_itf.IA.String(),
 					ValueString: &country,
 				})
 			}
