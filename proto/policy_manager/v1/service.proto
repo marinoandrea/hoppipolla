@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/marinoandrea/hoppipolla/pkg/proto/policy_manager";
+
+package proto.hoppipolla.policy_manager.v1;
+
+/*
+  Body responsible for issuing a policy.
+  It can be a governmental entity, an association, an organization,
+  or even an individual.
+  A default issuer represents the default framework's "service account" entity
+  that can install local policies. 
+*/
+message Issuer {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string name = 4;
+  optional string description = 5;
+}
+
+// Policy validating a path based on hops and relative NIP data using 
+// Hoppipolla ASP conventions.
+message Policy {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string source = 4;
+  optional string issuer_id = 5;
+  optional string title = 6;
+  optional string description = 7;
+}
+
+/*
+  Network link between two Autonomous Systems (AS) including the relative 
+  network interfaces.
+*/
+message Link {
+  // Autonomous System (AS) unique identifier, format is protocol/stack dependent
+  string as_a = 1;
+  // Interface unique identifier
+  string if_a = 2;
+  // Autonomous System (AS) unique identifier, format is protocol/stack dependent
+  string as_b = 3;
+  // Interface unique identifier
+  string if_b = 4;
+}
+
+service PolicyManager {
+  // Install a policy in the framework
+  rpc CreatePolicy(CreatePolicyRequest) returns (CreatePolicyResponse);
+  // Download a policy source definition and metadata
+  rpc ReadPolicy(ReadPolicyRequest) returns (ReadPolicyResponse);
+  // Update policy source definition or metadata
+  rpc UpdatePolicy(UpdatePolicyRequest) returns (UpdatePolicyResponse);
+  // Uninstall and delete a policy
+  rpc DeletePolicy(DeletePolicyRequest) returns (google.protobuf.Empty);
+  // List all currently active policies with optional filters
+  rpc ListPolicies(ListPoliciesRequest)returns (ListPoliciesResponse);
+  // Finds a network path compliant with the active policies
+  rpc FindPaths(FindPathsRequest) returns (FindPathsResponse);
+  // Register an issuer for external updates
+  rpc RegisterIssuer(RegisterIssuerRequest) returns (RegisterIssuerResponse);
+  // Subcribe an instance of the path analyzer service, 
+  // stores the client address for identification
+  rpc SubscribePathAnalyzer(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message CreatePolicyRequest { 
+  string source = 1;
+  optional string issuer_id = 2;
+  optional string title = 3;
+  optional string description = 4; 
+}
+
+message CreatePolicyResponse { 
+  Policy policy = 1; 
+}
+
+message UpdatePolicyRequest { 
+  string id = 1;
+  optional string statements = 2;
+  optional string title = 3;
+  optional string description = 4; 
+}
+message UpdatePolicyResponse { 
+  Policy policy = 1; 
+}
+
+message DeletePolicyRequest { 
+  string id = 1; 
+}
+
+message RegisterIssuerRequest { 
+  string name = 1;
+  int32 rank = 2;
+  optional string description = 3;
+}
+message RegisterIssuerResponse { 
+  Issuer issuer = 1; 
+}
+
+message ReadPolicyRequest { 
+  string id = 1;
+}
+message ReadPolicyResponse { 
+  Policy policy = 1; 
+}
+
+message ListPoliciesRequest {
+  // NOTE(andrea): for filtering if necessary
+}
+message ListPoliciesResponse {
+  repeated Policy policies = 1;
+}
+
+message FindPathsRequest {
+  // Source address, format is protocol/stack dependent
+  string src = 2;
+  // Destination address, format is protocol/stack dependent
+  string dst = 3;
+  // Network hops in the path, excluding source and destination
+  repeated Link links = 4;
+}
+
+message Path {
+  repeated Link links = 1;
+}
+
+message FindPathsResponse {
+  repeated Path paths = 1;
+}
+
+message GetDefaultIssuerResponse {
+  Issuer issuer = 1;
+}

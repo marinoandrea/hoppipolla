@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/marinoandrea/hoppipolla/pkg/proto/nip_proxy";
+
+package proto.hoppipolla.nip_proxy.v1;
+
+/*
+  Network link between two Autonomous Systems (AS) including the relative 
+  network interfaces.
+*/
+message Link {
+  // Autonomous System (AS) unique identifier, format is protocol/stack dependent
+  string as_a = 1;
+  // Interface unique identifier
+  string if_a = 2;
+  // Autonomous System (AS) unique identifier, format is protocol/stack dependent
+  string as_b = 3;
+  // Interface unique identifier
+  string if_b = 4;
+}
+
+message LinkMetadata {
+  string name = 1;
+  Link link = 2;
+  optional bool value_bool = 3;
+  optional int32 value_int32 = 4;
+  optional string value_string = 5;
+  google.protobuf.Timestamp collected_at = 6;
+}
+
+message NodeMetadata {
+  string name = 1;
+  string as = 2;
+  optional bool value_bool = 3;
+  optional int32 value_int32 = 4;
+  optional string value_string = 5;
+  google.protobuf.Timestamp collected_at = 6;
+}
+
+service NipProxy {
+  rpc GetMetadata(GetMetadataRequest) returns (GetMetadataResponse) {};
+}
+
+message GetMetadataRequest {
+  string src = 1;
+  string dst = 2;
+  repeated Link topology = 3;
+}
+
+message GetMetadataResponse {
+  repeated LinkMetadata link_info = 1;
+  repeated NodeMetadata node_info = 2;
+}
+

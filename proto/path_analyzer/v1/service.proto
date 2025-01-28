@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/marinoandrea/hoppipolla/pkg/proto/path_analyzer";
+
+package proto.hoppipolla.path_analyzer.v1;
+
+// A SCION network path
+message Path {
+  // Source ISD-AS address
+  uint64 src_isd_as = 2;
+  // Destination ISD-AS address
+  uint64 dst_isd_as = 3;
+  // List of hops in the path (excluding src and dst)
+  repeated Hop hops = 4;
+}
+
+// A hop in a SCION network path
+message Hop {
+  // ISD-AS address
+  uint64 isd_as = 1;
+  // Interface ID
+  uint64 if_id = 2;
+}
+
+/* 
+  The service represents the main UI to the framework.
+  A client requests a `Path` for a certain destination address (ISD-AS) via this
+  service and receives either an optional valid path (if available).
+*/
+service PathAnalyzer {
+  // Request a valid path given remote address
+  rpc GetPath(GetPathRequest) returns (GetPathResponse);
+  // Signal to the service that policies have been updated, used internally by
+  // the Policy Manager service
+  rpc Refresh(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message GetPathRequest  { 
+  // ISD-AS destination target
+  uint64 destination = 1; 
+}
+
+message GetPathResponse { 
+  // Optional SCION network path to reach destination if there is a valid one
+  optional Path path = 1; 
+}
