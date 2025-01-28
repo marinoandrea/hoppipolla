@@ -1,50 +1,20 @@
-FROM node:lts-slim as base-node
-
-RUN apt-get -qy update && apt-get -qy install openssl
-
-###
-
-FROM golang:1.21-bookworm as base-scion
-
-RUN apt-get -qy update && apt-get -qy install git
-
-WORKDIR /scion
-
-RUN git clone https://github.com/scionproto/scion; \
-    cd scion; \
-    go build -o bin/ ./...
-
-###
-
-FROM base-node as builder
+FROM golang:1.23.4-alpine AS builder
 
 WORKDIR /build
 
-COPY package.json package-lock.json tsconfig.json ./
+COPY go.mod .
+COPY go.sum .
 
-RUN npm ci
+RUN go mod download
 
-COPY eslint.config.mjs ./
-COPY src ./src
+COPY . .
 
-RUN npm run build
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o main
 
-
-###
-
-FROM base-node AS runtime
+FROM scratch AS runner
 
 WORKDIR /app
 
-COPY --from=base-scion /scion /
+COPY --from=builder /build/main /app/main
 
-ENV SCION_EXE_PATH ./scion/bin/scion
-
-COPY package.json package-lock.json ./
-
-RUN npm ci --omit dev
-
-COPY --from=builder /build/dist ./dist
-
-CMD [ "node", "dist/src/index.js" ]
-
+ENTRYPOINT ["/app/main"]
