@@ -1,34 +1,20 @@
-FROM node:lts-slim as base
-
-RUN apt-get -qy update && apt-get -qy install openssl
-
-###
-
-FROM base as builder
+FROM golang:1.23.4-alpine AS builder
 
 WORKDIR /build
 
-COPY package.json package-lock.json tsconfig.json ./
+COPY go.mod .
+COPY go.sum .
 
-RUN npm ci
+RUN go mod download
 
-COPY eslint.config.mjs ./
-COPY src ./src
+COPY . .
 
-RUN npm run build
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o main
 
-
-###
-
-FROM base AS runtime
+FROM scratch AS runner
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY --from=builder /build/main /app/main
 
-RUN npm ci --omit dev
-
-COPY --from=builder /build/dist ./dist
-
-CMD [ "node", "dist/src/index.js" ]
-
+ENTRYPOINT ["/app/main"]
