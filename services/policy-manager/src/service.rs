@@ -325,26 +325,26 @@ impl PolicyManager for Service {
                             })
                             .map(|info| {
                                 if info.value_bool.is_some() {
-                                    return reasoner::Metadata {
+                                    reasoner::Metadata {
                                         name: info.name.to_owned(),
                                         value: reasoner::MetadataValue::Boolean(
                                             info.value_bool.unwrap(),
                                         ),
-                                    };
+                                    }
                                 } else if info.value_int32.is_some() {
-                                    return reasoner::Metadata {
+                                    reasoner::Metadata {
                                         name: info.name.to_owned(),
                                         value: reasoner::MetadataValue::Numerical(
                                             info.value_int32.unwrap(),
                                         ),
-                                    };
+                                    }
                                 } else if info.value_string.is_some() {
-                                    return reasoner::Metadata {
+                                    reasoner::Metadata {
                                         name: info.name.to_owned(),
                                         value: reasoner::MetadataValue::Categorical(
                                             info.value_string.to_owned().unwrap(),
                                         ),
-                                    };
+                                    }
                                 } else {
                                     panic!("nip proxy is returning invalid data")
                                 }
@@ -359,25 +359,25 @@ impl PolicyManager for Service {
                 .iter()
                 .map(|info| {
                     if info.value_bool.is_some() {
-                        return reasoner::GlobalMetadata {
+                        reasoner::GlobalMetadata {
                             name: info.name.to_owned(),
                             subj: Some(info.node.to_owned()),
                             value: reasoner::MetadataValue::Boolean(info.value_bool.unwrap()),
-                        };
+                        }
                     } else if info.value_int32.is_some() {
-                        return reasoner::GlobalMetadata {
+                        reasoner::GlobalMetadata {
                             name: info.name.to_owned(),
                             subj: Some(info.node.to_owned()),
                             value: reasoner::MetadataValue::Numerical(info.value_int32.unwrap()),
-                        };
+                        }
                     } else if info.value_string.is_some() {
-                        return reasoner::GlobalMetadata {
+                        reasoner::GlobalMetadata {
                             name: info.name.to_owned(),
                             subj: Some(info.node.to_owned()),
                             value: reasoner::MetadataValue::Categorical(
                                 info.value_string.to_owned().unwrap(),
                             ),
-                        };
+                        }
                     } else {
                         panic!("nip proxy is returning invalid data")
                     }
