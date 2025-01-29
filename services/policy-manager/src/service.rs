@@ -103,9 +103,16 @@ impl Service {
 
     pub async fn init(&mut self) -> Result<(), Status> {
         self.nip_proxy = Some(
-            NipProxyClient::connect(self.config.nip_proxy_addr.to_string())
+            NipProxyClient::connect(format!("grpc://{}", self.config.nip_proxy_addr))
                 .await
-                .map_err(|e| Status::unknown(e.to_string()))?,
+                .map_err(|e| {
+                    log::error!(
+                        "failed to init nip proxy client at '{}': {}",
+                        self.config.nip_proxy_addr,
+                        e,
+                    );
+                    Status::unknown(e.to_string())
+                })?,
         );
         Ok(())
     }
