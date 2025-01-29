@@ -11,12 +11,19 @@ prost-types = "0.13"
 log = "0.4.25"
 envconfig = "0.11.0"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
-env_logger="0.10"
+env_logger = "0.10"
 tonic = "0.12.3"
 lazy_static = "1.4"
-sqlx = { version = "0.8", features = ["macros", "chrono", "runtime-tokio", "postgres", "uuid", "derive" ] }
+sqlx = { version = "0.8", features = [
+    "macros",
+    "chrono",
+    "runtime-tokio",
+    "postgres",
+    "uuid",
+    "derive",
+] }
 sqlxinsert = "0.11.0"
-uuid = { version = "1.11.0", features = [ "v4", "fast-rng" ] }
+uuid = { version = "1.11.0", features = ["v4", "fast-rng"] }
 lru = "0.12.5"
 
 

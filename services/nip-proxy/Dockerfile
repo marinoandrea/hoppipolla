@@ -7,9 +7,10 @@ COPY go.sum .
 
 RUN go mod download
 
-COPY . .
+COPY pkg ./pkg
+COPY services/nip-proxy ./services/nip-proxy
 
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o main
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o main ./services/nip-proxy
 
 FROM scratch AS runner
 

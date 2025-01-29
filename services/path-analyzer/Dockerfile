@@ -7,9 +7,10 @@ COPY go.sum .
 
 RUN go mod download
 
-COPY . .
+COPY pkg ./pkg
+COPY services/path-analyzer ./services/path-analyzer
 
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o main
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o main ./services/path-analyzer
 
 FROM scratch AS runner
 

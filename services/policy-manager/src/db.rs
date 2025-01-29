@@ -116,7 +116,22 @@ impl PolicyDb {
             .inspect_err(|e| log::error!("{}", e))
             .expect("could not connect to database");
 
-        // we are building a framework, not an application, no need for migrations
+        sqlx::query(
+                "
+                CREATE TABLE IF NOT EXISTS issuers (
+                    id          UUID PRIMARY KEY,
+                    created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+                    updated_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+                    name        TEXT NOT NULL
+                );
+            ",
+            )
+            .execute(&pool)
+            .await
+            .inspect_err(|e| log::error!("{}", e))
+            .expect("could not initialize database");
+    
+
         sqlx::query(
             "
             CREATE TABLE IF NOT EXISTS policies (
@@ -130,21 +145,22 @@ impl PolicyDb {
 
                 FOREIGN KEY (issuer_id) REFERENCES issuers(id)
             );
-            
-            CREATE TABLE IF NOT EXISTS issuers (
-                id          UUID PRIMARY KEY,
-                created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
-                updated_at  TIMESTAMP WITH TIME ZONE NOT NULL,
-                name        TEXT NOT NULL
-            );
+        ",
+        )
+        .execute(&pool)
+        .await
+        .inspect_err(|e| log::error!("{}", e))
+        .expect("could not initialize database");
 
+        sqlx::query(
+            "
             CREATE TABLE IF NOT EXISTS meta_policies (
                 id          UUID PRIMARY KEY,
                 created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
                 updated_at  TIMESTAMP WITH TIME ZONE NOT NULL,
                 title       TEXT,
                 description TEXT,
-                source      TEXT NOT NULL,
+                source      TEXT NOT NULL
             );
         ",
         )
