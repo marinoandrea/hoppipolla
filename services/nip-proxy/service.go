@@ -49,7 +49,6 @@ func (s *server) init(ctx context.Context) error {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -99,13 +98,13 @@ func main() {
 	}
 	defer server.shutdown(context.Background())
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", &server.config.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", server.config.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
 
-	log.Printf("server listening at %v", lis.Addr())
+	log.Printf("server listening at %v\n", lis.Addr())
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

@@ -206,7 +206,7 @@ func main() {
 	}
 	defer server.shutdown()
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", &server.config.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", server.config.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
