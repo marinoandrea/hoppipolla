@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -24,6 +25,7 @@ import (
 )
 
 type config struct {
+	Host              string `env:"HOST" default:"0.0.0.0"`
 	Port              int    `env:"PORT" default:"27001"`
 	SciondAddr        string `env:"SCIOND_ADDR" default:"127.0.0.1:30255"`
 	CacheSize         int    `env:"CACHE_SIZE" default:"1000"`
@@ -53,12 +55,11 @@ func (s *server) init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	s.policyManagerConn = conn
 	s.policyManagerClient = policypb.NewPolicyManagerClient(conn)
 
 	// subscribe to policy manager updates to keep cache consistency
-	var req emptypb.Empty
+	req := policypb.SubscribePathAnalyzerRequest{BroadcastAddr: fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)}
 	_, err = s.policyManagerClient.SubscribePathAnalyzer(context.Background(), &req)
 	if err != nil {
 		return err
@@ -78,13 +79,13 @@ func (s *server) shutdown() error {
 	return err
 }
 
-func (s *server) Refresh(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
+func (s server) Refresh(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
 	var res emptypb.Empty
 	s.cache.Purge()
 	return &res, nil
 }
 
-func (s *server) GetPath(ctx context.Context, req *pb.GetPathRequest) (*pb.GetPathResponse, error) {
+func (s server) GetPath(ctx context.Context, req *pb.GetPathRequest) (*pb.GetPathResponse, error) {
 	var res pb.GetPathResponse
 
 	src, err := s.conn.LocalIA(ctx)
@@ -195,26 +196,29 @@ func convertPathToMsg(path snet.Path) *pb.Path {
 }
 
 func main() {
+	log.SetOutput(os.Stdout)
+
 	var cfg config
 	if err := env.Load(&cfg, nil); err != nil {
 		log.Fatalf("failed to load env vars: %v", err)
 	}
+	log.Println("Loaded env variables")
 
 	server := newServer(cfg)
 	if err := server.init(context.Background()); err != nil {
 		log.Fatalf("failed to initialize server: %v", err)
 	}
 	defer server.shutdown()
+	log.Println("Initialized service")
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", server.config.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", server.config.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
 	grpcServer := grpc.NewServer()
-	pb.RegisterPathAnalyzerServer(grpcServer, &server)
-
-	log.Printf("server listening at %v", lis.Addr())
-
+	grpcServer.RegisterService(&pb.PathAnalyzer_ServiceDesc, server)
+	log.Printf("server listening at %v\n", lis.Addr())
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

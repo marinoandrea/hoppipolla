@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"go-simpler.org/env"
 	"google.golang.org/grpc"
@@ -62,7 +63,7 @@ func (s *server) shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *server) GetMetadata(ctx context.Context, req *pb.GetMetadataRequest) (*pb.GetMetadataResponse, error) {
+func (s server) GetMetadata(ctx context.Context, req *pb.GetMetadataRequest) (*pb.GetMetadataResponse, error) {
 	var out pb.GetMetadataResponse
 
 	results := make([]*sources.Metadata, 0)
@@ -87,25 +88,29 @@ func (s *server) GetMetadata(ctx context.Context, req *pb.GetMetadataRequest) (*
 }
 
 func main() {
+	log.SetOutput(os.Stdout)
+
 	var cfg config
 	if err := env.Load(&cfg, nil); err != nil {
 		log.Fatalf("failed to load env vars: %v", err)
 	}
+	log.Println("Loaded env variables")
 
 	server := newServer(cfg)
 	if err := server.init(context.Background()); err != nil {
 		log.Fatalf("failed to initialize server: %v", err)
 	}
 	defer server.shutdown(context.Background())
+	log.Println("Initialized service")
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", server.config.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", server.config.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
 	grpcServer := grpc.NewServer()
-
+	grpcServer.RegisterService(&pb.NipProxy_ServiceDesc, server)
 	log.Printf("server listening at %v\n", lis.Addr())
-
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

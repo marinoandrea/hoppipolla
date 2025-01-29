@@ -7,23 +7,18 @@ services:
     depends_on:
       - policy-manager
     environment:
-      - HOST=${HOPPIPOLLA_PATH_ANALYZER_HOST:-0.0.0.0}
+      - HOST=${HOPPIPOLLA_PATH_ANALYZER_HOST:-127.0.0.1}
       - PORT=${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}
-      - SCIOND_ADDR=host.docker.internal:${HOPPIPOLLA_SCIOND_PORT}
-      - DATABASE_URI=/var/lib/hoppipolla/path-analyzer/sqlite.db
-      - POLICY_MANAGER_ADDR=policy-manager:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}
+      - SCIOND_ADDR=${HOPPIPOLLA_SCIOND_URI:-127.0.0.1:30255}
+      - POLICY_MANAGER_ADDR=127.0.0.1:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}
       - CACHE_SIZE=${HOPPIPOLLA_PATH_ANALYZER_CACHE_SIZE:-1000}
-    volumes:
-      - /var/lib/hoppipolla/path-analyzer
     ports:
-      - 127.0.0.1:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}
-    networks:
-      - hoppipolla
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - ${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}:${HOPPIPOLLA_PATH_ANALYZER_PORT:-27001}
+    network_mode: host
 
   policy-manager:
     build:
+      network: host
       context: .
       dockerfile: services/policy-manager/Dockerfile
     container_name: policy-manager
@@ -33,18 +28,18 @@ services:
     environment:
       - HOST=${HOPPIPOLLA_POLICY_MANAGER_HOST:-localhost}
       - PORT=${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}
-      - DB_URI=postgresql://${HOPPIPOLLA_POLICY_MANAGER_PG_USER:-postgres}:${HOPPIPOLLA_POLICY_MANAGER_PG_PASSWORD}@policy-manager_db:${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}/${HOPPIPOLLA_POLICY_MANAGER_PG_DBNAME:-hoppipolla}
-      - NIP_PROXY_ADDR=nip-proxy:${HOPPIPOLLA_NIP_PROXY_PORT:-27003}
+      - DB_URI=postgresql://${HOPPIPOLLA_POLICY_MANAGER_PG_USER:-postgres}:${HOPPIPOLLA_POLICY_MANAGER_PG_PASSWORD}@127.0.0.1:${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}/${HOPPIPOLLA_POLICY_MANAGER_PG_DBNAME:-hoppipolla}
+      - NIP_PROXY_ADDR=127.0.0.1:${HOPPIPOLLA_NIP_PROXY_PORT:-27003}
     ports:
-      - 127.0.0.1:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}
-    networks:
-      - hoppipolla
+      - ${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}:${HOPPIPOLLA_POLICY_MANAGER_PORT:-27002}
+    network_mode: host
 
   policy-manager_db:
     image: postgres:15
     container_name: policy-manager_db
     restart: always
     user: postgres
+    attach: false
     environment:
       - POSTGRES_PORT=${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}
       - POSTGRES_USER=${HOPPIPOLLA_POLICY_MANAGER_PG_USER:-postgres}
@@ -53,31 +48,26 @@ services:
     volumes:
       - /var/lib/postgresql/data
     ports:
-      - 127.0.0.1:${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}:${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}
+      - ${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}:${HOPPIPOLLA_POLICY_MANAGER_PG_PORT:-5432}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: [ "CMD-SHELL", "pg_isready" ]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - hoppipolla
+    network_mode: host
 
   nip-proxy:
     build:
+      network: host
       context: .
       dockerfile: services/nip-proxy/Dockerfile
     container_name: nip-proxy
     environment:
       - HOST=${HOPPIPOLLA_NIP_PROXY_HOST:-localhost}
       - PORT=${HOPPIPOLLA_NIP_PROXY_PORT:-27003}
-      - SCIOND_ADDR=host.docker.internal:${HOPPIPOLLA_SCIOND_PORT}
+      - SCIOND_ADDR=${HOPPIPOLLA_SCIOND_URI}
       - CACHE_SIZE=${HOPPIPOLLA_NIP_PROXY_CACHE_SIZE:-1000}
+      - GOOGLE_MAPS_API_KEY=${HOPPIPOLLA_NIP_PROXY_GOOGLE_MAPS_API_KEY}
     ports:
-      - 127.0.0.1:${HOPPIPOLLA_NIP_PROXY_PORT:-27003}:${HOPPIPOLLA_NIP_PROXY_PORT:-27003}
-    networks:
-      - hoppipolla
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-networks:
-  hoppipolla:
+      - ${HOPPIPOLLA_NIP_PROXY_PORT:-27003}:${HOPPIPOLLA_NIP_PROXY_PORT:-27003}
+    network_mode: host

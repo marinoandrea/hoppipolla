@@ -1,4 +1,4 @@
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use lazy_static::lazy_static;
 use tokio::sync::{Mutex, RwLock};
@@ -24,14 +24,24 @@ pub struct Service {
 
 struct ClientHandle {
     stale: bool,
-    addr: SocketAddr,
-    chan: PathAnalyzerClient<Channel>,
+    addr: String,
+    chan: Option<PathAnalyzerClient<Channel>>,
 }
 
 impl ClientHandle {
     async fn refresh(&mut self) -> Result<(), Status> {
         if self.stale {
-            self.chan.refresh(Request::new(())).await?;
+            if self.chan.is_none() {
+                self.chan = Some(
+                    PathAnalyzerClient::connect(self.addr.clone())
+                        .await
+                        .map_err(|e| {
+                            println!("ERROR: PathAnalyzerClient::connect({}): {}", self.addr, e);
+                            Status::unknown(e.to_string())
+                        })?,
+                );
+            }
+            self.chan.clone().unwrap().refresh(Request::new(())).await?;
             self.stale = false;
         }
         Ok(())
@@ -114,6 +124,9 @@ impl Service {
                     Status::unknown(e.to_string())
                 })?,
         );
+
+        log::info!("Connected to NIP proxy");
+
         Ok(())
     }
 }
@@ -452,23 +465,20 @@ impl PolicyManager for Service {
         Ok(Response::new(res))
     }
 
-    async fn subscribe_path_analyzer(&self, request: Request<()>) -> Result<Response<()>, Status> {
-        let addr = request.remote_addr().ok_or(Status::internal(
-            "could not extract remote address from request",
-        ))?;
+    async fn subscribe_path_analyzer(
+        &self,
+        request: Request<pb::SubscribePathAnalyzerRequest>,
+    ) -> Result<Response<()>, Status> {
+        let addr = request.get_ref().clone().broadcast_addr;
 
-        let chan = PathAnalyzerClient::connect(addr.to_string())
-            .await
-            .map_err(|e| Status::unknown(e.to_string()))?;
+        println!("Registered client at {}", &addr);
 
-        // NOTE: maybe we should not refresh on new client registration
         let mut clients = CLIENTS.lock().await;
-        let mut client = ClientHandle {
+        let client = ClientHandle {
             addr,
-            chan,
-            stale: true,
+            chan: None,
+            stale: false,
         };
-        client.refresh().await?;
         clients.push(client);
 
         Ok(Response::new(()))

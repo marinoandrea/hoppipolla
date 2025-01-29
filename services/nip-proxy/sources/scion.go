@@ -29,6 +29,7 @@ type ScionCacheValue struct {
 }
 
 type ScionNipSource struct {
+	isInit             bool
 	config             ScionNipSourceConfig
 	daemon             *daemon.Service
 	conn               daemon.Connector
@@ -38,8 +39,8 @@ type ScionNipSource struct {
 	googleMapsClient   *maps.Client
 }
 
-func NewScionNipSource(cfg ScionNipSourceConfig) ScionNipSource {
-	return ScionNipSource{
+func NewScionNipSource(cfg ScionNipSourceConfig) *ScionNipSource {
+	return &ScionNipSource{
 		config:             cfg,
 		daemon:             &daemon.Service{Address: cfg.SciondAddress},
 		cache:              expirable.NewLRU[ScionCacheKey, ScionCacheValue](cfg.CacheSize, nil, 0),
@@ -47,19 +48,20 @@ func NewScionNipSource(cfg ScionNipSourceConfig) ScionNipSource {
 		cacheRefreshChan:   make(chan bool),
 	}
 }
-
-func (s ScionNipSource) Init(ctx context.Context) error {
+func (s *ScionNipSource) Init(ctx context.Context) error {
 	dconn, err := s.daemon.Connect(ctx)
 	if err != nil {
 		return err
 	}
 	s.conn = dconn
+	log.Printf("Connected to SCION daemon at '%s'", s.config.SciondAddress)
 
 	gclient, err := maps.NewClient(maps.WithAPIKey(s.config.GoogleMapsApiKey))
 	if err != nil {
 		return err
 	}
 	s.googleMapsClient = gclient
+	log.Println("Initialized Google Maps client")
 
 	go func() {
 		for {
@@ -83,6 +85,7 @@ func (s ScionNipSource) Init(ctx context.Context) error {
 			}
 		}
 	}()
+	log.Println("Started monitoring daemon")
 
 	return nil
 }

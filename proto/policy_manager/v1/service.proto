@@ -66,7 +66,7 @@ service PolicyManager {
   rpc RegisterIssuer(RegisterIssuerRequest) returns (RegisterIssuerResponse);
   // Subcribe an instance of the path analyzer service, 
   // stores the client address for identification
-  rpc SubscribePathAnalyzer(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc SubscribePathAnalyzer(SubscribePathAnalyzerRequest) returns (google.protobuf.Empty);
 }
 
 message CreatePolicyRequest { 
@@ -136,4 +136,10 @@ message FindPathsResponse {
 
 message GetDefaultIssuerResponse {
   Issuer issuer = 1;
+}
+
+message SubscribePathAnalyzerRequest {
+  // Address that should be used by the policy manager to broadcast policy
+  // updates and cache eviction signals.
+  string broadcast_addr = 1;
 }

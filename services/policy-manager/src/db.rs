@@ -117,7 +117,7 @@ impl PolicyDb {
             .expect("could not connect to database");
 
         sqlx::query(
-                "
+            "
                 CREATE TABLE IF NOT EXISTS issuers (
                     id          UUID PRIMARY KEY,
                     created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -125,12 +125,11 @@ impl PolicyDb {
                     name        TEXT NOT NULL
                 );
             ",
-            )
-            .execute(&pool)
-            .await
-            .inspect_err(|e| log::error!("{}", e))
-            .expect("could not initialize database");
-    
+        )
+        .execute(&pool)
+        .await
+        .inspect_err(|e| log::error!("{}", e))
+        .expect("could not initialize database");
 
         sqlx::query(
             "
