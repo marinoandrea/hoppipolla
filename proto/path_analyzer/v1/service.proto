@@ -33,18 +33,18 @@ message Hop {
 */
 service PathAnalyzer {
   // Request a valid path given remote address
-  rpc GetPath(GetPathRequest) returns (GetPathResponse);
+  rpc GetPaths(GetPathsRequest) returns (GetPathsResponse);
   // Signal to the service that policies have been updated, used internally by
   // the Policy Manager service
   rpc Refresh(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
-message GetPathRequest  { 
+message GetPathsRequest  { 
   // ISD-AS destination target
   string destination = 1; 
 }
 
-message GetPathResponse {
+message GetPathsResponse {
   // Valid SCION network paths to reach destination
   repeated Path paths = 1; 
 }

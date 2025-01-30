@@ -20,8 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PathAnalyzer_GetPath_FullMethodName = "/proto.hoppipolla.path_analyzer.v1.PathAnalyzer/GetPath"
-	PathAnalyzer_Refresh_FullMethodName = "/proto.hoppipolla.path_analyzer.v1.PathAnalyzer/Refresh"
+	PathAnalyzer_GetPaths_FullMethodName = "/proto.hoppipolla.path_analyzer.v1.PathAnalyzer/GetPaths"
+	PathAnalyzer_Refresh_FullMethodName  = "/proto.hoppipolla.path_analyzer.v1.PathAnalyzer/Refresh"
 )
 
 // PathAnalyzerClient is the client API for PathAnalyzer service.
@@ -33,7 +33,7 @@ const (
 // service and receives either an optional valid path (if available).
 type PathAnalyzerClient interface {
 	// Request a valid path given remote address
-	GetPath(ctx context.Context, in *GetPathRequest, opts ...grpc.CallOption) (*GetPathResponse, error)
+	GetPaths(ctx context.Context, in *GetPathsRequest, opts ...grpc.CallOption) (*GetPathsResponse, error)
 	// Signal to the service that policies have been updated, used internally by
 	// the Policy Manager service
 	Refresh(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*empty.Empty, error)
@@ -47,10 +47,10 @@ func NewPathAnalyzerClient(cc grpc.ClientConnInterface) PathAnalyzerClient {
 	return &pathAnalyzerClient{cc}
 }
 
-func (c *pathAnalyzerClient) GetPath(ctx context.Context, in *GetPathRequest, opts ...grpc.CallOption) (*GetPathResponse, error) {
+func (c *pathAnalyzerClient) GetPaths(ctx context.Context, in *GetPathsRequest, opts ...grpc.CallOption) (*GetPathsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetPathResponse)
-	err := c.cc.Invoke(ctx, PathAnalyzer_GetPath_FullMethodName, in, out, cOpts...)
+	out := new(GetPathsResponse)
+	err := c.cc.Invoke(ctx, PathAnalyzer_GetPaths_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (c *pathAnalyzerClient) Refresh(ctx context.Context, in *empty.Empty, opts 
 // service and receives either an optional valid path (if available).
 type PathAnalyzerServer interface {
 	// Request a valid path given remote address
-	GetPath(context.Context, *GetPathRequest) (*GetPathResponse, error)
+	GetPaths(context.Context, *GetPathsRequest) (*GetPathsResponse, error)
 	// Signal to the service that policies have been updated, used internally by
 	// the Policy Manager service
 	Refresh(context.Context, *empty.Empty) (*empty.Empty, error)
@@ -90,8 +90,8 @@ type PathAnalyzerServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPathAnalyzerServer struct{}
 
-func (UnimplementedPathAnalyzerServer) GetPath(context.Context, *GetPathRequest) (*GetPathResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPath not implemented")
+func (UnimplementedPathAnalyzerServer) GetPaths(context.Context, *GetPathsRequest) (*GetPathsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPaths not implemented")
 }
 func (UnimplementedPathAnalyzerServer) Refresh(context.Context, *empty.Empty) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
@@ -117,20 +117,20 @@ func RegisterPathAnalyzerServer(s grpc.ServiceRegistrar, srv PathAnalyzerServer)
 	s.RegisterService(&PathAnalyzer_ServiceDesc, srv)
 }
 
-func _PathAnalyzer_GetPath_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPathRequest)
+func _PathAnalyzer_GetPaths_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPathsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PathAnalyzerServer).GetPath(ctx, in)
+		return srv.(PathAnalyzerServer).GetPaths(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PathAnalyzer_GetPath_FullMethodName,
+		FullMethod: PathAnalyzer_GetPaths_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PathAnalyzerServer).GetPath(ctx, req.(*GetPathRequest))
+		return srv.(PathAnalyzerServer).GetPaths(ctx, req.(*GetPathsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -161,8 +161,8 @@ var PathAnalyzer_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PathAnalyzerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetPath",
-			Handler:    _PathAnalyzer_GetPath_Handler,
+			MethodName: "GetPaths",
+			Handler:    _PathAnalyzer_GetPaths_Handler,
 		},
 		{
 			MethodName: "Refresh",

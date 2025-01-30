@@ -85,8 +85,8 @@ func (s server) Refresh(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty
 	return &res, nil
 }
 
-func (s server) GetPath(ctx context.Context, req *pb.GetPathRequest) (*pb.GetPathResponse, error) {
-	var res pb.GetPathResponse
+func (s server) GetPaths(ctx context.Context, req *pb.GetPathsRequest) (*pb.GetPathsResponse, error) {
+	var res pb.GetPathsResponse
 
 	src, err := s.conn.LocalIA(ctx)
 	if err != nil {
