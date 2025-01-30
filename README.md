@@ -24,22 +24,18 @@ SCION network.
 An example of such policy in natural language:
 
 ```
-Do not route network traffic through nodes that operate in country X
+Do not route network traffic through AS nodes that operate in country X
 ```
 
 Which, using the Hoppipolla-specific ASP syntax would look like:
 
 ```
--valid(Path) :- CountryCode == "X",
-    operatingCountryCode(GeoReading, CountryCode),
-    latestGeoDataCollected(Hop, GeoReading),
-    contains(Path, Hop).
+:- chosen(AS, _, _, _), operates(AS, "X").
 ```
 
 The framework is constituted by a suite of services and the language-specific
 SDKs used to interact with them from the client side. All of the services expose
-a gRPC API defined in the [`protos`](protos) folder that can be used directly in place of
-the SDK of choice.
+a gRPC API defined in the [`proto`](proto) folder.
 
 ## Installation
 
@@ -55,8 +51,14 @@ SCION and use it within the SCIONLab testbed.
 ### Docker Compose
 
 At this stage, Hoppipolla is not ready for production in a fully distributed
-environment. Therefore, for experimental work, it is recommendend that you run
-it locally using `docker compose`.
+environment. However, for experimental work, one can run it using `docker compose`.
+The repository contains a [`docker-compose.yml`](docker-compose.yml) file which
+contains all the necessary services (including a policy database).
+Simply set up the relevant environmental variables and then run:
+
+```sh
+docker compose up
+```
 
 You can find an example of the configuration options that can be passed to the
 services in the [`.env.example`](.env.example) file.
@@ -65,46 +67,15 @@ services in the [`.env.example`](.env.example) file.
 > Most notably, the `HOPPIPOLLA_SCIOND_URI` env variable should be set to
 > the address of the SCION daemon (e.g., 127.0.0.1:30255).
 
-The repository contains a [`docker-compose.yml`](docker-compose.yml) file which
-runs all the necessary services. You can spin up Hoppipolla on your machine
-simply by running:
-
-```
-docker compose up
-```
-
-## Documentation
-
-> [!WARNING]
-> TBD
-
 ## Examples
 
-The following snippet shows a simple usage of the Python SDK:
+The [`scenarios`](scenarios) folder contains usage examples using Go and the
+gRPC API of the Hoppipolla services.
 
-```python
-policy = '''
--valid(Path) :- @listContains(CountryCodes, "X"),
-    operatingCountryCodes(GeoReading, CountryCodes),
-    latestGeoReading(Hop, GeoReading),
-    hasGeoReading(Hop, GeoReading),
-    contains(Path, Hop),
-    geoReading(GeoReading),
-    hop(Hop),
-    path(Path).
-'''
+## Citation
 
-config = hp.HoppipollaClientConfig() # default values
-client = hp.HoppipollaClient.from_config(config)
-
-issuer = client.get_default_issuer()
-
-policy1 = client.publish_policy(issuer, policy)
-
-result = client.ping("1-ff00:0:110,10.0.0.1")
-
-print(result)
-```
+> [!WARNING]  
+> This study is under peer review.
 
 ## License
 
