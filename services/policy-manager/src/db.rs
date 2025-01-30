@@ -76,6 +76,16 @@ impl PolicyDb {
             .await
     }
 
+    pub async fn reset_policies<'e, E>(&self, executor: E) -> Result<(), sqlx::Error>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query("DELETE FROM policies;")
+            .execute(executor)
+            .await?;
+        Ok(())
+    }
+
     pub async fn update_policy<'e, E>(&self, executor: E, p: &Policy) -> Result<(), sqlx::Error>
     where
         E: sqlx::Executor<'e, Database = sqlx::Postgres>,

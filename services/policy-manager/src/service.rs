@@ -485,4 +485,13 @@ impl PolicyManager for Service {
 
         Ok(Response::new(()))
     }
+
+    async fn reset_policies(&self, _: Request<()>) -> Result<Response<()>, Status> {
+        let mut tx = self.db.tx().await;
+        self.db
+            .reset_policies(&mut *tx)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+        Ok(Response::new(()))
+    }
 }

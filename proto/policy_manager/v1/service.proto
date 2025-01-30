@@ -60,6 +60,8 @@ service PolicyManager {
   rpc DeletePolicy(DeletePolicyRequest) returns (google.protobuf.Empty);
   // List all currently active policies with optional filters
   rpc ListPolicies(ListPoliciesRequest)returns (ListPoliciesResponse);
+  // Utility to reset the policy database to a clean slate
+  rpc ResetPolicies(google.protobuf.Empty) returns (google.protobuf.Empty);
   // Finds a network path compliant with the active policies
   rpc FindPaths(FindPathsRequest) returns (FindPathsResponse);
   // Register an issuer for external updates

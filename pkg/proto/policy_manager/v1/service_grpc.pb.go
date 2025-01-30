@@ -25,6 +25,7 @@ const (
 	PolicyManager_UpdatePolicy_FullMethodName          = "/proto.hoppipolla.policy_manager.v1.PolicyManager/UpdatePolicy"
 	PolicyManager_DeletePolicy_FullMethodName          = "/proto.hoppipolla.policy_manager.v1.PolicyManager/DeletePolicy"
 	PolicyManager_ListPolicies_FullMethodName          = "/proto.hoppipolla.policy_manager.v1.PolicyManager/ListPolicies"
+	PolicyManager_ResetPolicies_FullMethodName         = "/proto.hoppipolla.policy_manager.v1.PolicyManager/ResetPolicies"
 	PolicyManager_FindPaths_FullMethodName             = "/proto.hoppipolla.policy_manager.v1.PolicyManager/FindPaths"
 	PolicyManager_RegisterIssuer_FullMethodName        = "/proto.hoppipolla.policy_manager.v1.PolicyManager/RegisterIssuer"
 	PolicyManager_SubscribePathAnalyzer_FullMethodName = "/proto.hoppipolla.policy_manager.v1.PolicyManager/SubscribePathAnalyzer"
@@ -44,6 +45,8 @@ type PolicyManagerClient interface {
 	DeletePolicy(ctx context.Context, in *DeletePolicyRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	// List all currently active policies with optional filters
 	ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error)
+	// Utility to reset the policy database to a clean slate
+	ResetPolicies(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*empty.Empty, error)
 	// Finds a network path compliant with the active policies
 	FindPaths(ctx context.Context, in *FindPathsRequest, opts ...grpc.CallOption) (*FindPathsResponse, error)
 	// Register an issuer for external updates
@@ -111,6 +114,16 @@ func (c *policyManagerClient) ListPolicies(ctx context.Context, in *ListPolicies
 	return out, nil
 }
 
+func (c *policyManagerClient) ResetPolicies(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*empty.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, PolicyManager_ResetPolicies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *policyManagerClient) FindPaths(ctx context.Context, in *FindPathsRequest, opts ...grpc.CallOption) (*FindPathsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FindPathsResponse)
@@ -155,6 +168,8 @@ type PolicyManagerServer interface {
 	DeletePolicy(context.Context, *DeletePolicyRequest) (*empty.Empty, error)
 	// List all currently active policies with optional filters
 	ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error)
+	// Utility to reset the policy database to a clean slate
+	ResetPolicies(context.Context, *empty.Empty) (*empty.Empty, error)
 	// Finds a network path compliant with the active policies
 	FindPaths(context.Context, *FindPathsRequest) (*FindPathsResponse, error)
 	// Register an issuer for external updates
@@ -186,6 +201,9 @@ func (UnimplementedPolicyManagerServer) DeletePolicy(context.Context, *DeletePol
 }
 func (UnimplementedPolicyManagerServer) ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPolicies not implemented")
+}
+func (UnimplementedPolicyManagerServer) ResetPolicies(context.Context, *empty.Empty) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResetPolicies not implemented")
 }
 func (UnimplementedPolicyManagerServer) FindPaths(context.Context, *FindPathsRequest) (*FindPathsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindPaths not implemented")
@@ -307,6 +325,24 @@ func _PolicyManager_ListPolicies_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PolicyManager_ResetPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyManagerServer).ResetPolicies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyManager_ResetPolicies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyManagerServer).ResetPolicies(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PolicyManager_FindPaths_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FindPathsRequest)
 	if err := dec(in); err != nil {
@@ -387,6 +423,10 @@ var PolicyManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPolicies",
 			Handler:    _PolicyManager_ListPolicies_Handler,
+		},
+		{
+			MethodName: "ResetPolicies",
+			Handler:    _PolicyManager_ResetPolicies_Handler,
 		},
 		{
 			MethodName: "FindPaths",
