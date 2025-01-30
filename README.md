@@ -33,9 +33,8 @@ Which, using the Hoppipolla-specific ASP syntax would look like:
 :- chosen(AS, _, _, _), operates(AS, "X").
 ```
 
-The framework is constituted by a suite of services and the language-specific
-SDKs used to interact with them from the client side. All of the services expose
-a gRPC API defined in the [`proto`](proto) folder.
+The framework consists of a suite of fully-containerized services. 
+All of the services expose a gRPC API defined in the [`proto`](proto) folder.
 
 ## Installation
 
