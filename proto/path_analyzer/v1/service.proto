@@ -12,8 +12,6 @@ message Path {
   string src = 1;
   // Destination ISD-AS address
   string dst = 2;
-  // String representation of the path
-  string sequence = 3;
   // List of hops in the path (excluding src and dst)
   repeated Hop hops = 4;
 }
