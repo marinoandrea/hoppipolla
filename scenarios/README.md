@@ -1,39 +1,33 @@
 # End-to-end Acceptance Scenarios
 
 This folder contains a set of use-case scenarios that leverage the whole
-system. Every scenario contains a `Makefile` that allows for generating the
-necessary artifacts with full reproducibility (using seeds for pseudo-random
-values). Every scenario comprises of the following artifacts:
+system and provide a reproduction package for our evaluation. 
+Every scenario can contain the following artifacts:
 
-- A topology `.topo` file for configuring the SCION network locally
-- A `hoppipolla.ini` file containing configuration variables for Hoppipolla
-  services and for the data generation.
-- A `data` folder containing one or more of the following mock files to feed to
-  the `nip-proxy`:
-  - A `energy-readings.json` file for the energy readings for each AS in the
-    topology and a number of machines per AS.
-  - A `geography.json` file for geographical data about the ASes
-- A `policies` folder containing one or more ASP files
-- An `assets` folder for any visualization and other documentation assets
+- A `Makefile` that allows for for full reproducibility with the following formulas:
+  - `setup`: for generating data artifacts
+  - `execute`: for executing the scenario test case
+  - `clean`: for removing the generated artifacts
+- A `main.go` file that executes the scenario and measures the isolated execution performance
+- Zero or more `*.lp` files containing ASP policies and meta-policies
+- An optional `nip.json` file for manually recorded Network Information Plane data
 
-Every `Makefile` contains at least the following targets:
-
-- `scion`: for setting up the SCION network locally and other prerequisites
-- `setup`: for generating data artifacts
-- `clean`: for removing the generated artifacts
-
-Just run `make scion` and `make setup` in any order to be able to execute
-the selected scenario.
+Just run `make execute` to execute the selected scenario.
+Running `make clean` is not necessary after every test, as the relevant cleanup
+is performed within the `main.go` file.
 
 ## Requirements
 
-The scenarios are meant for testing the framework, therefore the user should
-setup a local SCION network following [this guide](https://docs.scion.org/en/latest/dev/run.html).
+The scenarios are meant for testing the framework within the SCIONLab testbed,
+therefore the user should setup a local SCION network following 
+[this guide](https://docs.scionlab.org/content/install/).
+Therefore, we expect for the SCION daemon to be accessible at the default 
+address `127.0.0.1:30255`.
 
-In order to allow SCION to run with `docker compose`, make sure to also run
-`make docker-images` after you built the SCION project.
+Moreover, during testing we setup our custom SCIONLab AS with the entrypoint
+`19-ffaa:0:1303`. Therefore, these scenarios are designed to be run with 
+this configuration.
 
-Once you have installed SCION locally, you should set the `HOPPIPOLLA_SCION_HOME`
-variable to wherever your [`scion`](https://github.com/scionproto/scion) source
-code has been cloned. You can do this in a `.env` file that must be placed in
-the scenario folder as shown in the `.env.example` files in every scenario.
+Finally, we expect the framework to be configured within the host network and 
+for the services to be accessible at the default addresses 
+`127.0.0.1:(27001|27002|27003)`.
