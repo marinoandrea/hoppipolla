@@ -144,7 +144,7 @@ func (s server) GetPaths(ctx context.Context, req *pb.GetPathsRequest) (*pb.GetP
 		return nil, err
 	}
 
-	paths = make([]*pb.Path, len(policyRes.Paths))
+	paths = make([]*pb.Path, 0, len(policyRes.Paths))
 	for _, path := range policyRes.Paths {
 		paths = append(paths, fromPolicyPBToPathPB(policyReq.Src, policyReq.Dst, path))
 	}
@@ -168,11 +168,11 @@ func fromPolicyPBToPathPB(src string, dst string, path *policypb.Path) *pb.Path 
 		Hops: make([]*pb.Hop, 0, len(path.Links)*2),
 	}
 
-	nodeAsCurrent := src
+	currentNode := src
 	for {
 		found_i := -1
 		for i, link := range path.Links {
-			if nodeAsCurrent == out.Src {
+			if currentNode == out.Src {
 				out.Hops = append(out.Hops, &pb.Hop{
 					As: link.AsA,
 					If: link.IfA,
@@ -181,15 +181,15 @@ func fromPolicyPBToPathPB(src string, dst string, path *policypb.Path) *pb.Path 
 					As: link.AsB,
 					If: link.IfB,
 				})
-				nodeAsCurrent = link.AsB
+				currentNode = link.AsB
 				found_i = i
 				break
-			} else if link.AsA == nodeAsCurrent {
+			} else if link.AsA == currentNode {
 				out.Hops = append(out.Hops, &pb.Hop{
 					As: link.AsB,
 					If: link.IfB,
 				})
-				nodeAsCurrent = link.AsB
+				currentNode = link.AsB
 				found_i = i
 				break
 			}
