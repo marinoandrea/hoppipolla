@@ -12,9 +12,11 @@ COPY services/nip-proxy ./services/nip-proxy
 
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o main ./services/nip-proxy
 
-FROM scratch AS runner
+FROM debian:stable-slim AS runner
 
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y ca-certificates
 
 COPY --from=builder /build/main /app/main
 

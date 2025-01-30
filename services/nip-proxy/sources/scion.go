@@ -133,21 +133,22 @@ func (s ScionNipSource) GetMetadata(ctx context.Context, req *pb.GetMetadataRequ
 				return nil, err
 			}
 
-			countries := make([]string, 0)
-			for _, addrComp := range geocode[0].AddressComponents {
-				for _, addrCompType := range addrComp.Types {
-					if addrCompType == "country" {
-						countries = append(countries, addrComp.LongName)
+			if len(geocode) > 0 {
+				countries := make([]string, len(geocode))
+				for _, addrComp := range geocode[0].AddressComponents {
+					for _, addrCompType := range addrComp.Types {
+						if addrCompType == "country" {
+							countries = append(countries, addrComp.ShortName)
+						}
 					}
 				}
-			}
-
-			for _, country := range countries {
-				out.NodeInfo = append(out.NodeInfo, NodeMetadata{
-					Name:        "operates",
-					Node:        current_itf.IA.String(),
-					ValueString: &country,
-				})
+				for _, country := range countries {
+					out.NodeInfo = append(out.NodeInfo, NodeMetadata{
+						Name:        "operates",
+						Node:        current_itf.IA.String(),
+						ValueString: &country,
+					})
+				}
 			}
 
 			if i == len(path.Metadata().Interfaces)-1 {

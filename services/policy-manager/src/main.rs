@@ -43,8 +43,6 @@ async fn main() {
 
     log::set_max_level(log::LevelFilter::Info);
 
-    println!("Started");
-
     let config = Config::init_from_env().expect("could not extract config from env");
     let addr = format!("0.0.0.0:{}", config.port)
         .parse()
@@ -53,7 +51,7 @@ async fn main() {
     let mut app = Service::with_config(config.clone()).await;
     app.init().await.expect("failed to init service");
 
-    println!("Initialized service listening on port {}", config.port);
+    log::info!("Initialized service listening on port {}", config.port);
 
     let daemon_handle = tokio::spawn(run_broadcast_daemon());
 
@@ -64,7 +62,7 @@ async fn main() {
 
     if status.is_err() {
         let err = status.err().unwrap();
-        println!("ERROR: {}", err);
+        log::error!("{}", err);
     }
 
     let _ = daemon_handle

@@ -1008,8 +1008,10 @@ func (x *GetDefaultIssuerResponse) GetIssuer() *Issuer {
 }
 
 type SubscribePathAnalyzerRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BroadcastAddr string                 `protobuf:"bytes,1,opt,name=broadcast_addr,json=broadcastAddr,proto3" json:"broadcast_addr,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Address that should be used by the policy manager to broadcast policy
+	// updates and cache eviction signals.
+	BroadcastAddr string `protobuf:"bytes,1,opt,name=broadcast_addr,json=broadcastAddr,proto3" json:"broadcast_addr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

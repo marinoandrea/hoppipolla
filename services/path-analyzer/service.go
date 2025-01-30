@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 	"net"
 	"os"
 	"time"
@@ -21,7 +22,6 @@ import (
 
 	"github.com/scionproto/scion/pkg/addr"
 	"github.com/scionproto/scion/pkg/daemon"
-	"github.com/scionproto/scion/pkg/snet"
 )
 
 type config struct {
@@ -37,7 +37,7 @@ type server struct {
 	config              config
 	daemon              *daemon.Service
 	conn                daemon.Connector
-	cache               *expirable.LRU[addr.IA, []snet.Path]
+	cache               *expirable.LRU[addr.IA, []*pb.Path]
 	policyManagerConn   *grpc.ClientConn
 	policyManagerClient policypb.PolicyManagerClient
 }
@@ -46,7 +46,7 @@ func newServer(cfg config) server {
 	return server{
 		config: cfg,
 		daemon: &daemon.Service{Address: cfg.SciondAddr},
-		cache:  expirable.NewLRU[addr.IA, []snet.Path](cfg.CacheSize, nil, 0),
+		cache:  expirable.NewLRU[addr.IA, []*pb.Path](cfg.CacheSize, nil, 0),
 	}
 }
 
@@ -93,103 +93,113 @@ func (s server) GetPath(ctx context.Context, req *pb.GetPathRequest) (*pb.GetPat
 		return nil, err
 	}
 
-	dst := addr.IA(req.Destination)
-	now := time.Now()
-
-	// check in-memory caches
-	paths, ok := s.cache.Get(dst)
-	if ok {
-		for _, path := range paths {
-			if path.Metadata().Expiry.After(now) {
-				res.Path = convertPathToMsg(path)
-				return &res, nil
-			}
-		}
-	}
-	s.cache.Remove(dst)
-
-	// retrieve new candidates from sciond
-	candidates, err := s.conn.Paths(ctx, dst, src, daemon.PathReqFlags{})
+	dst, err := addr.ParseIA(req.Destination)
 	if err != nil {
 		return nil, err
 	}
 
-	pathToLinks := make(map[snet.Path][]*policypb.Link)
+	// check in-memory caches
+	paths, ok := s.cache.Get(dst)
+	if ok {
+		res.Paths = paths
+		return &res, nil
+	}
+
+	// retrieve new candidates from sciond
+	candidates, err := s.conn.Paths(ctx, dst, src, daemon.PathReqFlags{Refresh: true})
+	if err != nil {
+		return nil, err
+	}
+
+	minExpiry := int64(math.MaxInt64)
+	links := make([]*policypb.Link, 0)
 	for _, path := range candidates {
+		minExpiry = min(path.Metadata().Expiry.UnixMilli(), minExpiry)
 		idfs := path.Metadata().Interfaces
-		links := make([]*policypb.Link, 0)
 		for i := range len(idfs) {
+			if i == len(idfs)-1 {
+				break
+			}
 			idfA := idfs[i]
 			idfB := idfs[i+1]
-			// NOTE(andrea): we have to convert to string here cause our
-			// reasoner in the policy-manager service only supports 32-bit
 			links = append(links, &policypb.Link{
 				AsA: idfA.IA.String(),
 				IfA: idfA.ID.String(),
 				AsB: idfB.IA.String(),
 				IfB: idfB.ID.String()})
 		}
-		pathToLinks[path] = links
 	}
 
-	// obtain valid paths from policy-manager
-	graph := make([]*policypb.Link, 0)
-	for _, links := range pathToLinks {
-		for _, link := range links {
-			graph = append(graph, link)
-		}
-	}
+	// evict cache once paths have expired
+	time.AfterFunc(time.Duration((minExpiry-time.Now().UnixMilli())*time.Hour.Milliseconds()), func() {
+		s.cache.Remove(dst)
+	})
 
-	policyRes, err := s.policyManagerClient.FindPaths(ctx, &policypb.FindPathsRequest{
+	policyReq := policypb.FindPathsRequest{
 		Src:   src.String(),
 		Dst:   dst.String(),
-		Links: graph})
+		Links: links}
+	policyRes, err := s.policyManagerClient.FindPaths(ctx, &policyReq)
 	if err != nil {
 		return nil, err
 	}
 
-	// NOTE(andrea): inefficient operation, but allows to preserve snet.Path
-	// metadata without leaking SCION abstractions into the policy-manager which
-	// should be somewhat dataplane agnostic
-	paths = make([]snet.Path, 0)
-	for _, policyPath := range policyRes.Paths {
-		found := true
-		for _, path := range candidates {
-			if len(path.Metadata().Interfaces) != len(policyPath.Links) {
-				continue
-			}
-			for i := range len(policyPath.Links) {
-				if pathToLinks[path][i].AsA != policyPath.Links[i].AsA || pathToLinks[path][i].AsB != policyPath.Links[i].AsB || pathToLinks[path][i].IfA != policyPath.Links[i].IfA || pathToLinks[path][i].IfB != policyPath.Links[i].IfB {
-					found = false
-					break
-				}
-			}
-			if found {
-				paths = append(paths, path)
-			}
-		}
+	paths = make([]*pb.Path, len(policyRes.Paths))
+	for _, path := range policyRes.Paths {
+		paths = append(paths, fromPolicyPBToPathPB(policyReq.Src, policyReq.Dst, path))
 	}
-
 	s.cache.Add(dst, paths)
-
-	if len(paths) > 0 {
-		res.Path = convertPathToMsg(paths[0])
-	}
+	res.Paths = paths
 
 	return &res, nil
 }
 
-func convertPathToMsg(path snet.Path) *pb.Path {
-	out := pb.Path{
-		SrcIsdAs: uint64(path.Source()),
-		DstIsdAs: uint64(path.Destination()),
-		Hops:     make([]*pb.Hop, 0, len(path.Metadata().Interfaces)),
+// Reconstructs the path in order of visit
+func fromPolicyPBToPathPB(src string, dst string, path *policypb.Path) *pb.Path {
+	cut := func(i int, xs []*policypb.Link) (*policypb.Link, []*policypb.Link) {
+		y := xs[i]
+		ys := append(xs[:i], xs[i+1:]...)
+		return y, ys
 	}
 
-	for _, idf := range path.Metadata().Interfaces {
-		out.Hops = append(out.Hops, &pb.Hop{
-			IsdAs: uint64(idf.IA),
-			IfId:  uint64(idf.ID)})
+	out := pb.Path{
+		Src:  src,
+		Dst:  dst,
+		Hops: make([]*pb.Hop, 0, len(path.Links)*2),
+	}
+
+	nodeAsCurrent := src
+	for {
+		found_i := -1
+		for i, link := range path.Links {
+			if nodeAsCurrent == out.Src {
+				out.Hops = append(out.Hops, &pb.Hop{
+					As: link.AsA,
+					If: link.IfA,
+				})
+				out.Hops = append(out.Hops, &pb.Hop{
+					As: link.AsB,
+					If: link.IfB,
+				})
+				nodeAsCurrent = link.AsB
+				found_i = i
+				break
+			} else if link.AsA == nodeAsCurrent {
+				out.Hops = append(out.Hops, &pb.Hop{
+					As: link.AsB,
+					If: link.IfB,
+				})
+				nodeAsCurrent = link.AsB
+				found_i = i
+				break
+			}
+		}
+
+		if len(path.Links) == 0 || found_i == -1 {
+			break
+		}
+
+		cut(found_i, path.Links)
 	}
 
 	return &out

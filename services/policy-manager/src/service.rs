@@ -36,7 +36,7 @@ impl ClientHandle {
                     PathAnalyzerClient::connect(self.addr.clone())
                         .await
                         .map_err(|e| {
-                            println!("ERROR: PathAnalyzerClient::connect({}): {}", self.addr, e);
+                            log::error!("PathAnalyzerClient::connect({}): {}", self.addr, e);
                             Status::unknown(e.to_string())
                         })?,
                 );
@@ -405,6 +405,8 @@ impl PolicyManager for Service {
                 .collect(),
         };
 
+        log::debug!("{:?}", pi);
+
         let solution =
             reasoner::solve(&pi, policies, issuers, meta_policy).map_err(|err| match err {
                 ReasonerError::AspError(e) => Status::internal(e.to_string()),
@@ -413,6 +415,8 @@ impl PolicyManager for Service {
                     Status::aborted("invalid meta-policy instance".to_string())
                 }
             })?;
+
+        log::debug!("{:?}", solution);
 
         if let Some(paths) = solution {
             res.paths = paths
@@ -471,7 +475,7 @@ impl PolicyManager for Service {
     ) -> Result<Response<()>, Status> {
         let addr = request.get_ref().clone().broadcast_addr;
 
-        println!("Registered client at {}", &addr);
+        log::info!("Registered client at {}", request.get_ref().broadcast_addr);
 
         let mut clients = CLIENTS.lock().await;
         let client = ClientHandle {

@@ -28,8 +28,8 @@ const PROBLEM_ENCODING: &str = "
 :- dst(D), not chosen(_, _, D, _).
 
 % check continuity
-:- chosen(_, _, Y, _), #count { X : chosen(X, _, Y, _) } != 1, not src(Y).
-:- chosen(X, _, _, _), #count { Y : chosen(X, _, Y, _) } != 1, not dst(X).
+:- chosen(_, _, Y, YIF), #count { X, XIF : chosen(X, XIF, Y, YIF) } != 1, not src(Y).
+:- chosen(X, XIF, _, _), #count { Y, YIF : chosen(X, XIF, Y, YIF) } != 1, not dst(X).
 
 % check reachability
 reachable(S) :- src(S).
@@ -126,7 +126,7 @@ fn populate_global_metadata(fb: &mut FactBase, data: &GlobalMetadata) -> Result<
             fb.insert(&Symbol::create_function(&data.name, &args, true)?)
         }
         MetadataValue::Categorical(v) => {
-            args.push(Symbol::create_string(&v)?);
+            args.push(Symbol::create_string(v)?);
             fb.insert(&Symbol::create_function(&data.name, &args, true)?)
         }
     }
@@ -167,12 +167,14 @@ impl ProblemInstance {
                         fb.insert(&Symbol::create_function(&data.name, &args, *v)?)
                     }
                     MetadataValue::Numerical(v) => {
-                        args.push(Symbol::create_number(*v));
-                        fb.insert(&Symbol::create_function(&data.name, &args, true)?)
+                        let mut new_args = args.clone();
+                        new_args.push(Symbol::create_number(*v));
+                        fb.insert(&Symbol::create_function(&data.name, &new_args, true)?)
                     }
                     MetadataValue::Categorical(v) => {
-                        args.push(Symbol::create_string(&v)?);
-                        fb.insert(&Symbol::create_function(&data.name, &args, true)?)
+                        let mut new_args = args.clone();
+                        new_args.push(Symbol::create_string(v)?);
+                        fb.insert(&Symbol::create_function(&data.name, &new_args, true)?)
                     }
                 }
             }
@@ -219,7 +221,7 @@ pub struct MetaProblemInstance<'a> {
     solutions: &'a HashMap<PolicyId, HashSet<Vec<Link>>>,
 }
 
-impl<'a> MetaProblemInstance<'a> {
+impl MetaProblemInstance<'_> {
     fn populate(&self, fb: &mut FactBase) -> Result<(), ClingoError> {
         for issuer in self.issuers.iter() {
             fb.insert(&Symbol::create_function(
@@ -305,6 +307,40 @@ pub fn solve(
     pi.populate(&mut fb)
         .expect("failed at populating the fact base, this is probably an issue with the string identifiers in the links");
 
+    if policies.is_empty() {
+        let mut sols = HashSet::new();
+
+        let mut ctl = control(vec![]).expect("failed to create control handle");
+        ctl.add_facts(&fb).expect("failed to add facts");
+        ctl.add("base", &[], PROBLEM_ENCODING)
+            .expect("failed to add base problem encoding");
+
+        let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
+        ctl.ground(&parts).map_err(ReasonerError::AspError)?;
+
+        let mut handle = ctl
+            .solve(SolveMode::ASYNC | SolveMode::YIELD, &[])
+            .map_err(ReasonerError::AspError)?;
+
+        loop {
+            handle.resume().map_err(ReasonerError::AspError)?;
+            match handle.model() {
+                Ok(Some(model)) => {
+                    let atoms = model
+                        .symbols(ShowType::SHOWN)
+                        .expect("failed to retrieve shown symbols in model");
+                    let path = reconstruct_path(&pi.src, &pi.dst, atoms)
+                        .expect("unable to reconstruct pact from model");
+                    sols.insert(path);
+                }
+                Ok(None) => break,
+                Err(e) => return Err(ReasonerError::AspError(e)),
+            }
+        }
+
+        return Ok(Some(sols));
+    }
+
     // TODO: parallelize with rayon
     // solve search problem for every policy
     let mut results = HashMap::new();
@@ -315,7 +351,7 @@ pub fn solve(
         ctl.add_facts(&fb).expect("failed to add facts");
         ctl.add("base", &[], PROBLEM_ENCODING)
             .expect("failed to add base problem encoding");
-        ctl.add("base", &[], &pol.source())
+        ctl.add("base", &[], pol.source())
             .map_err(ReasonerError::AspError)?;
 
         let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
@@ -394,7 +430,7 @@ pub fn solve(
                     activation
                         .arguments()
                         .expect("failed to extract active argument")
-                        .get(0)
+                        .first()
                         .expect("malformed active predicate")
                         .to_owned(),
                 );
@@ -411,7 +447,7 @@ pub fn solve(
                         .arguments()
                         .expect("failed to extract conflicting arguments");
                     let pol_a = conflicting_policies
-                        .get(0)
+                        .first()
                         .expect("faulty definition of conflicting a")
                         .to_owned();
                     let pol_b = conflicting_policies
@@ -467,18 +503,17 @@ pub fn solve(
         let pol_symbol = &Symbol::create_string(&pol.to_string())
             .map_err(ReasonerError::AspError)
             .unwrap();
-        return !overridden_policies.contains(pol_symbol)
-            && !deactivated_policies.contains(pol_symbol);
+        !overridden_policies.contains(pol_symbol) && !deactivated_policies.contains(pol_symbol)
     });
 
     match valid_results.next() {
-        None => return Ok(None),
+        None => Ok(None),
         Some((_, sols)) => {
             let mut out = sols.clone();
             for (_, sols) in valid_results {
                 out = out.intersection(sols).cloned().collect();
             }
-            return Ok(Some(out));
+            Ok(Some(out))
         }
     }
 }
