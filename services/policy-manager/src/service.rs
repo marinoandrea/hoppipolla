@@ -405,7 +405,7 @@ impl PolicyManager for Service {
                 .collect(),
         };
 
-        log::debug!("{:?}", pi);
+        // log::debug!("{:?}", pi);
 
         let solution =
             reasoner::solve(&pi, policies, issuers, meta_policy).map_err(|err| match err {
@@ -415,8 +415,6 @@ impl PolicyManager for Service {
                     Status::aborted("invalid meta-policy instance".to_string())
                 }
             })?;
-
-        log::debug!("{:?}", solution);
 
         if let Some(paths) = solution {
             res.paths = paths

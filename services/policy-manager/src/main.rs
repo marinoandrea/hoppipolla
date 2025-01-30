@@ -41,8 +41,6 @@ async fn main() {
         .target(env_logger::Target::Stdout)
         .init();
 
-    log::set_max_level(log::LevelFilter::Info);
-
     let config = Config::init_from_env().expect("could not extract config from env");
     let addr = format!("0.0.0.0:{}", config.port)
         .parse()

@@ -148,7 +148,7 @@ impl ProblemInstance {
         )?);
 
         for link in self.links.iter() {
-            let mut args = vec![
+            let args = vec![
                 Symbol::create_string(&link.as_a)?,
                 Symbol::create_string(&link.if_a)?,
                 Symbol::create_string(&link.as_b)?,
@@ -303,6 +303,8 @@ pub fn solve(
     issuers: Vec<Issuer>,
     metapolicy: Option<&str>,
 ) -> Result<Option<HashSet<Vec<Link>>>, ReasonerError> {
+    let ctl_args = vec!["--models=0".to_string()];
+
     let mut fb = FactBase::new();
     pi.populate(&mut fb)
         .expect("failed at populating the fact base, this is probably an issue with the string identifiers in the links");
@@ -310,7 +312,7 @@ pub fn solve(
     if policies.is_empty() {
         let mut sols = HashSet::new();
 
-        let mut ctl = control(vec![]).expect("failed to create control handle");
+        let mut ctl = control(ctl_args.clone()).expect("failed to create control handle");
         ctl.add_facts(&fb).expect("failed to add facts");
         ctl.add("base", &[], PROBLEM_ENCODING)
             .expect("failed to add base problem encoding");
@@ -318,24 +320,11 @@ pub fn solve(
         let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
         ctl.ground(&parts).map_err(ReasonerError::AspError)?;
 
-        let mut handle = ctl
-            .solve(SolveMode::ASYNC | SolveMode::YIELD, &[])
-            .map_err(ReasonerError::AspError)?;
-
-        loop {
-            handle.resume().map_err(ReasonerError::AspError)?;
-            match handle.model() {
-                Ok(Some(model)) => {
-                    let atoms = model
-                        .symbols(ShowType::SHOWN)
-                        .expect("failed to retrieve shown symbols in model");
-                    let path = reconstruct_path(&pi.src, &pi.dst, atoms)
-                        .expect("unable to reconstruct pact from model");
-                    sols.insert(path);
-                }
-                Ok(None) => break,
-                Err(e) => return Err(ReasonerError::AspError(e)),
-            }
+        for model in ctl.all_models().map_err(ReasonerError::AspError)? {
+            let path = reconstruct_path(&pi.src, &pi.dst, model.symbols)
+                .expect("unable to reconstruct pact from model");
+            log::debug!("Path found: {:?}", path);
+            sols.insert(path);
         }
 
         return Ok(Some(sols));
@@ -347,7 +336,7 @@ pub fn solve(
     for pol in policies.iter() {
         let mut sols = HashSet::new();
 
-        let mut ctl = control(vec![]).expect("failed to create control handle");
+        let mut ctl = control(ctl_args.clone()).expect("failed to create control handle");
         ctl.add_facts(&fb).expect("failed to add facts");
         ctl.add("base", &[], PROBLEM_ENCODING)
             .expect("failed to add base problem encoding");
@@ -357,24 +346,11 @@ pub fn solve(
         let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
         ctl.ground(&parts).map_err(ReasonerError::AspError)?;
 
-        let mut handle = ctl
-            .solve(SolveMode::ASYNC | SolveMode::YIELD, &[])
-            .map_err(ReasonerError::AspError)?;
-
-        loop {
-            handle.resume().map_err(ReasonerError::AspError)?;
-            match handle.model() {
-                Ok(Some(model)) => {
-                    let atoms = model
-                        .symbols(ShowType::SHOWN)
-                        .expect("failed to retrieve shown symbols in model");
-                    let path = reconstruct_path(&pi.src, &pi.dst, atoms)
-                        .expect("unable to reconstruct pact from model");
-                    sols.insert(path);
-                }
-                Ok(None) => break,
-                Err(e) => return Err(ReasonerError::AspError(e)),
-            }
+        for model in ctl.all_models().map_err(ReasonerError::AspError)? {
+            let path = reconstruct_path(&pi.src, &pi.dst, model.symbols)
+                .expect("unable to reconstruct pact from model");
+            log::debug!("Path found: {:?}", path);
+            sols.insert(path);
         }
 
         results.insert(pol.id(), sols);
