@@ -62,6 +62,8 @@ service PolicyManager {
   rpc ListPolicies(ListPoliciesRequest)returns (ListPoliciesResponse);
   // Utility to reset the policy database to a clean slate
   rpc ResetPolicies(google.protobuf.Empty) returns (google.protobuf.Empty);
+  // Set the conflict resolution policy, overriding any previous one
+  rpc SetMetaPolicy(SetMetaPolicyRequest) returns (google.protobuf.Empty);
   // Finds a network path compliant with the active policies
   rpc FindPaths(FindPathsRequest) returns (FindPathsResponse);
   // Register an issuer for external updates
@@ -144,4 +146,10 @@ message SubscribePathAnalyzerRequest {
   // Address that should be used by the policy manager to broadcast policy
   // updates and cache eviction signals.
   string broadcast_addr = 1;
+}
+
+message SetMetaPolicyRequest { 
+  string source = 1;
+  optional string title = 3;
+  optional string description = 4; 
 }

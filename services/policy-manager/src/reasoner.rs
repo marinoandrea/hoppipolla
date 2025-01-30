@@ -7,7 +7,7 @@ use std::{
 
 use clingo::{control, ClingoError, FactBase, Part, ShowType, SolveMode, Symbol};
 
-use crate::entities::{Issuer, Policy, PolicyId, DEFAULT_ISSUER};
+use crate::entities::{Issuer, MetaPolicy, Policy, PolicyId, DEFAULT_ISSUER};
 use crate::policy_manager as pb;
 
 const SYMBOL_SRC: &str = "src";
@@ -301,7 +301,7 @@ pub fn solve(
     pi: &ProblemInstance,
     policies: Vec<Policy>,
     issuers: Vec<Issuer>,
-    metapolicy: Option<&str>,
+    metapolicy: Option<MetaPolicy>,
 ) -> Result<Option<HashSet<Vec<Link>>>, ReasonerError> {
     let ctl_args = vec!["--models=0".to_string()];
 
@@ -370,9 +370,9 @@ pub fn solve(
     let mut meta_ctl = control(Vec::new()).expect("failed to create control handle");
     meta_ctl.add_facts(&meta_fb).expect("failed to add facts");
 
-    if let Some(mp_source) = metapolicy {
+    if let Some(mp) = metapolicy {
         meta_ctl
-            .add("base", &[], mp_source)
+            .add("base", &[], &mp.source())
             .map_err(ReasonerError::AspError)?;
     }
 

@@ -62,6 +62,17 @@ impl PolicyDb {
         p.insert_ex(executor, "policies").await
     }
 
+    pub async fn insert_metapolicy<'e, E>(
+        &self,
+        executor: E,
+        p: &MetaPolicy,
+    ) -> Result<(), sqlx::Error>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        p.insert_ex(executor, "meta_policies").await
+    }
+
     pub async fn delete_policy<'e, E>(
         &self,
         executor: E,
@@ -169,7 +180,7 @@ impl PolicyDb {
                 updated_at  TIMESTAMP WITH TIME ZONE NOT NULL,
                 title       TEXT,
                 description TEXT,
-                source      TEXT NOT NULL
+                source      TEXT NOT NULL,
             );
         ",
         )

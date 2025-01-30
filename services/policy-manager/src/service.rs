@@ -16,7 +16,7 @@ use crate::reasoner::{self, ReasonerError};
 pub struct Service {
     config: crate::Config,
     db: PolicyDb,
-    meta_policy: Option<MetaPolicy>,
+    meta_policy: Arc<RwLock<Option<MetaPolicy>>>,
     policies: Arc<RwLock<HashMap<PolicyId, Policy>>>,
     issuers: Arc<RwLock<HashMap<IssuerId, Issuer>>>,
     nip_proxy: Option<NipProxyClient<Channel>>,
@@ -99,7 +99,7 @@ impl Service {
                 .collect::<HashMap<_, _>>(),
         ));
 
-        let meta_policy = db.load_meta_policy().await;
+        let meta_policy = Arc::new(RwLock::new(db.load_meta_policy().await));
 
         Self {
             config,
@@ -125,7 +125,7 @@ impl Service {
                 })?,
         );
 
-        log::info!("Connected to NIP proxy");
+        self.meta_policy = Arc::new(RwLock::new(self.db.load_meta_policy().await));
 
         Ok(())
     }
@@ -297,7 +297,7 @@ impl PolicyManager for Service {
 
         let policies = self.policies.read().await.values().cloned().collect();
         let issuers = self.issuers.read().await.values().cloned().collect();
-        let meta_policy = self.meta_policy.as_ref().map(|mp| mp.source().as_str());
+        let meta_policy = self.meta_policy.read().await.clone();
 
         let nip_res = self
             .nip_proxy
@@ -492,6 +492,28 @@ impl PolicyManager for Service {
             .reset_policies(&mut *tx)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
+        Ok(Response::new(()))
+    }
+
+    async fn set_meta_policy(
+        &self,
+        request: Request<pb::SetMetaPolicyRequest>,
+    ) -> Result<Response<()>, Status> {
+        let req = request.get_ref().clone();
+
+        let mp = MetaPolicy::new(req.title, req.description, req.source)
+            .map_err(|e| Status::invalid_argument(e.to_string()))?;
+
+        let mut tx = self.db.tx().await;
+
+        self.db
+            .insert_metapolicy(&mut *tx, &mp)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        let mut old = self.meta_policy.write().await;
+        *old = Some(mp);
+
         Ok(Response::new(()))
     }
 }
