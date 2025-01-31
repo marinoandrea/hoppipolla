@@ -327,7 +327,7 @@ func saveResults() {
 
 	line := ""
 	for test := range N_TEST {
-		line += fmt.Sprintf("PTC%d", test)
+		line += fmt.Sprintf("PTC%d", test+1)
 		if test < N_TEST-1 {
 			line += "\t"
 		}
@@ -337,7 +337,7 @@ func saveResults() {
 	for run := range N_RUNS {
 		line := ""
 		for test := range N_TEST {
-			line += fmt.Sprintf("%s", results[test][run])
+			line += fmt.Sprintf("%d", results[test][run].Milliseconds())
 			if test < N_TEST-1 {
 				line += "\t"
 			}
