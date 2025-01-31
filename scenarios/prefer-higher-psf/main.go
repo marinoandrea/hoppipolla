@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"time"
 
 	papb "github.com/marinoandrea/hoppipolla/pkg/proto/path_analyzer/v1"
 	pmpb "github.com/marinoandrea/hoppipolla/pkg/proto/policy_manager/v1"
@@ -20,12 +19,13 @@ var results [2]*papb.GetPathsResponse
 var paClient papb.PathAnalyzerClient
 var pmClient pmpb.PolicyManagerClient
 
+var paConn *grpc.ClientConn
+var pmConn *grpc.ClientConn
+
 func main() {
 	setup()
-	start := time.Now()
+	clean()
 	execute()
-	elapsed := time.Since(start)
-	log.Printf("Elapsed %s", elapsed)
 	clean()
 	log.Println(results)
 }
@@ -78,21 +78,17 @@ func setup() {
 	policy = string(buf)
 
 	// initialize connection to path-analyzer service
-	paConn, err := grpc.NewClient("127.0.0.1:27001", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	paConn, err = grpc.NewClient("127.0.0.1:27001", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer paConn.Close()
-
 	paClient = papb.NewPathAnalyzerClient(paConn)
 
 	// initialize connection to policy-manager service
-	pmConn, err := grpc.NewClient("127.0.0.1:27002", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	pmConn, err = grpc.NewClient("127.0.0.1:27002", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer pmConn.Close()
-
 	pmClient = pmpb.NewPolicyManagerClient(pmConn)
 }
 

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"time"
 
 	"github.com/scionproto/scion/pkg/addr"
 	"github.com/scionproto/scion/pkg/daemon"
@@ -11,17 +10,15 @@ import (
 )
 
 var policy string
-var results [2][]snet.Path
+var results []snet.Path
 
 var scionDaemon *daemon.Service
 var scionDaemonConn daemon.Connector
 
 func main() {
 	setup()
-	start := time.Now()
+	clean()
 	execute()
-	elapsed := time.Since(start)
-	log.Printf("Elapsed %s", elapsed)
 	clean()
 	log.Println(results)
 }
@@ -37,19 +34,11 @@ func execute() {
 		log.Fatalln(err)
 	}
 
-	candidates, err := scionDaemonConn.Paths(context.TODO(), dst, src,
+	results, err = scionDaemonConn.Paths(context.TODO(), dst, src,
 		daemon.PathReqFlags{Refresh: true})
 	if err != nil {
 		log.Fatalln(err)
 	}
-	results[0] = candidates
-
-	candidates, err = scionDaemonConn.Paths(context.TODO(), dst, src,
-		daemon.PathReqFlags{Refresh: true})
-	if err != nil {
-		log.Fatalln(err)
-	}
-	results[1] = candidates
 }
 
 func setup() {

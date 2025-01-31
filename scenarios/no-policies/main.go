@@ -3,25 +3,24 @@ package main
 import (
 	"context"
 	"log"
-	"time"
 
 	papb "github.com/marinoandrea/hoppipolla/pkg/proto/path_analyzer/v1"
+	pmpb "github.com/marinoandrea/hoppipolla/pkg/proto/policy_manager/v1"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-var results [1]*papb.GetPathsResponse
+var results *papb.GetPathsResponse
 
 var paClient papb.PathAnalyzerClient
+var pmClient pmpb.PolicyManagerClient
 
 func main() {
 	setup()
-	start := time.Now()
+	clean()
 	execute()
-	elapsed := time.Since(start)
-	log.Printf("Elapsed %s", elapsed)
 	clean()
 	log.Println(results)
 }
@@ -33,7 +32,7 @@ func execute() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	results[0] = paRes
+	results = paRes
 }
 
 func setup() {
@@ -41,11 +40,16 @@ func setup() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer paConn.Close()
-
 	paClient = papb.NewPathAnalyzerClient(paConn)
+
+	pmConn, err := grpc.NewClient("127.0.0.1:27002", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	pmClient = pmpb.NewPolicyManagerClient(pmConn)
 }
 
 func clean() {
+	pmClient.ResetPolicies(context.TODO(), &emptypb.Empty{})
 	paClient.Refresh(context.TODO(), &emptypb.Empty{})
 }

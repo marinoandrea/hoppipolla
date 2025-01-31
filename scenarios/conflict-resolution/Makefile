@@ -1,10 +1,10 @@
 .PHONY: setup execute clean
 
 setup:
-	docker compose up
+	docker compose up &
 
 execute: setup
-	go main.go
+	go run main.go
 
 clean:
 	docker compose down

@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"time"
 
 	papb "github.com/marinoandrea/hoppipolla/pkg/proto/path_analyzer/v1"
 	pmpb "github.com/marinoandrea/hoppipolla/pkg/proto/policy_manager/v1"
@@ -25,10 +24,8 @@ var pmClient pmpb.PolicyManagerClient
 
 func main() {
 	setup()
-	start := time.Now()
+	clean()
 	execute()
-	elapsed := time.Since(start)
-	log.Printf("Elapsed time: %s", elapsed)
 	clean()
 	log.Println(results)
 }
@@ -53,7 +50,7 @@ func execute() {
 	// retrieve valid paths for destination
 	paRes1, err := paClient.GetPaths(context.TODO(), &paReq)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	results[0] = paRes1
 
@@ -140,8 +137,6 @@ func setup() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer paConn.Close()
-
 	paClient = papb.NewPathAnalyzerClient(paConn)
 
 	// initialize connection to policy-manager service
@@ -149,8 +144,6 @@ func setup() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer pmConn.Close()
-
 	pmClient = pmpb.NewPolicyManagerClient(pmConn)
 }
 

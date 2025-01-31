@@ -4,4 +4,4 @@ total_avg_psf(TotAvgPsf) :-
     TotAvgPsf=#sum{AvgPsf: avg_psf(AS, AvgPsf),
     chosen(AS, _, _, _)}.
     
-#maximize { Psf: total_avg_psf(TotAvgPsf) }.
+#maximize { TotAvgPsf: total_avg_psf(TotAvgPsf) }.

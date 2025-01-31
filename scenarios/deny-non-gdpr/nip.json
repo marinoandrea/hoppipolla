@@ -1,3 +1,15 @@
 {
-    
+  "node_info": [
+    { "node": "17-ffaa:0:1101", "name": "operates", "value_string": "CH" },
+    { "node": "17-ffaa:0:1102", "name": "operates", "value_string": "CH" },
+    { "node": "17-ffaa:0:1103", "name": "operates", "value_string": "CH" },
+    { "node": "17-ffaa:0:1108", "name": "operates", "value_string": "CH" },
+    { "node": "19-ffaa:0:1301", "name": "operates", "value_string": "DE" },
+    { "node": "19-ffaa:0:1303", "name": "operates", "value_string": "DE" },
+    { "node": "19-ffaa:0:130a", "name": "operates", "value_string": "SP" },
+    { "node": "19-ffaa:0:130b", "name": "operates", "value_string": "DE" },
+    { "node": "19-ffaa:0:1305", "name": "operates", "value_string": "DE" },
+    { "node": "19-ffaa:0:1309", "name": "operates", "value_string": "SP" }
+  ],
+  "link_info": []
 }
