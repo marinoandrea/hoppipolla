@@ -1,0 +1,6 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "services/policy-manager/Cargo.toml"
+    ],
+    "makefile.configureOnOpen": false
+}
