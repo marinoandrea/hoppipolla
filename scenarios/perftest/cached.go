@@ -17,49 +17,28 @@ import (
 	pmpb "github.com/marinoandrea/hoppipolla/pkg/proto/policy_manager/v1"
 )
 
-const N_TEST = 5
-const N_RUNS = 100
-
-const DST = "16-ffaa:0:1002"
-const ADDR_SCIOND = "127.0.0.1:30255"
-const ADDR_PATH_ANALYZER = "127.0.0.1:27001"
-const ADDR_POLICY_MANAGER = "127.0.0.1:27002"
-
-const OUTPUT_FILE = "perftest.csv"
-
-var results [N_TEST][N_RUNS]time.Duration
-
-var scionDaemon *daemon.Service
-var scionDaemonConn daemon.Connector
-
-var paClient papb.PathAnalyzerClient
-var pmClient pmpb.PolicyManagerClient
-
-var paConn *grpc.ClientConn
-var pmConn *grpc.ClientConn
-
-func main() {
-	setup()
-	clean()
-	executePtc1()
+func executeCachedPerftest() {
+	setupCached()
+	cleanCached()
+	executeCachedPtc1()
 	log.Println("Executed PTC1")
-	clean()
-	executePtc2()
+	cleanCached()
+	executeCachedPtc2()
 	log.Println("Executed PTC2")
-	clean()
-	executePtc3()
+	cleanCached()
+	executeCachedPtc3()
 	log.Println("Executed PTC3")
-	clean()
-	executePtc4()
+	cleanCached()
+	executeCachedPtc4()
 	log.Println("Executed PTC4")
-	clean()
-	executePtc5()
+	cleanCached()
+	executeCachedPtc5()
 	log.Println("Executed PTC5")
-	clean()
-	saveResults()
+	cleanCached()
+	saveCachedResults()
 }
 
-func executePtc1() {
+func executeCachedPtc1() {
 	src, err := scionDaemonConn.LocalIA(context.TODO())
 	if err != nil {
 		log.Fatalln(err)
@@ -73,7 +52,7 @@ func executePtc1() {
 	for i := range N_RUNS {
 		start := time.Now()
 		_, err = scionDaemonConn.Paths(context.TODO(), dst, src,
-			daemon.PathReqFlags{Refresh: true})
+			daemon.PathReqFlags{Refresh: i == 0})
 		elapsed := time.Since(start)
 		if err != nil {
 			log.Fatalln(err)
@@ -82,7 +61,7 @@ func executePtc1() {
 	}
 }
 
-func executePtc2() {
+func executeCachedPtc2() {
 	paConn, err := grpc.NewClient(ADDR_PATH_ANALYZER, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalln(err)
@@ -99,15 +78,11 @@ func executePtc2() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		_, err = paClient.Refresh(context.TODO(), &emptypb.Empty{})
-		if err != nil {
-			log.Fatalln(err)
-		}
 		results[1][i] = elapsed
 	}
 }
 
-func executePtc3() {
+func executeCachedPtc3() {
 	f, err := os.Open("./deny-non-gdpr/policy.lp")
 	if err != nil {
 		log.Fatalln(err)
@@ -141,15 +116,11 @@ func executePtc3() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		_, err = paClient.Refresh(context.TODO(), &emptypb.Empty{})
-		if err != nil {
-			log.Fatalln(err)
-		}
 		results[2][i] = elapsed
 	}
 }
 
-func executePtc4() {
+func executeCachedPtc4() {
 	f, err := os.Open("./prefer-higher-psf/policy.lp")
 	if err != nil {
 		log.Fatalln(err)
@@ -183,15 +154,11 @@ func executePtc4() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		_, err = paClient.Refresh(context.TODO(), &emptypb.Empty{})
-		if err != nil {
-			log.Fatalln(err)
-		}
 		results[3][i] = elapsed
 	}
 }
 
-func executePtc5() {
+func executeCachedPtc5() {
 	// load policy A
 	f, err := os.Open("./conflict-resolution/policy-a.lp")
 	if err != nil {
@@ -282,15 +249,11 @@ func executePtc5() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		_, err = paClient.Refresh(context.TODO(), &emptypb.Empty{})
-		if err != nil {
-			log.Fatalln(err)
-		}
 		results[4][i] = elapsed
 	}
 }
 
-func setup() {
+func setupCached() {
 	// initialize connection to scion daemon
 	scionDaemon = &daemon.Service{Address: ADDR_SCIOND}
 	conn, err := scionDaemon.Connect(context.TODO())
@@ -314,12 +277,12 @@ func setup() {
 	pmClient = pmpb.NewPolicyManagerClient(pmConn)
 }
 
-func clean() {
+func cleanCached() {
 	pmClient.ResetPolicies(context.TODO(), &emptypb.Empty{})
 	paClient.Refresh(context.TODO(), &emptypb.Empty{})
 }
 
-func saveResults() {
+func saveCachedResults() {
 	f, err := os.Create(OUTPUT_FILE)
 	if err != nil {
 		log.Fatalln(err)
@@ -337,7 +300,7 @@ func saveResults() {
 	for run := range N_RUNS {
 		line := ""
 		for test := range N_TEST {
-			line += fmt.Sprintf("%d", results[test][run].Milliseconds())
+			line += fmt.Sprintf("%s", results[test][run])
 			if test < N_TEST-1 {
 				line += "\t"
 			}
