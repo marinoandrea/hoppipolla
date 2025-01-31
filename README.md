@@ -3,8 +3,7 @@
 ---
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![CI](https://github.com/marinoandrea/hoppipolla/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
-[![codecov](https://codecov.io/github/marinoandrea/hoppipolla/graph/badge.svg?token=X0T25B3TQP)](https://codecov.io/github/marinoandrea/hoppipolla)
+[![Build](https://github.com/marinoandrea/hoppipolla/actions/workflows/build.yml/badge.svg)](.github/workflows/build.yml)
 
 > [!WARNING]  
 > This software is in early phase of development and is not ready for
@@ -33,7 +32,7 @@ Which, using the Hoppipolla-specific ASP syntax would look like:
 :- chosen(AS, _, _, _), operates(AS, "X").
 ```
 
-The framework consists of a suite of fully-containerized services. 
+The framework consists of a suite of fully-containerized services.
 All of the services expose a gRPC API defined in the [`proto`](proto) folder.
 
 ## Installation
