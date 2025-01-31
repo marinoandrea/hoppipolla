@@ -15,10 +15,11 @@ import (
 )
 
 type config struct {
-	Port             int    `env:"PORT" default:"27003"`
-	SciondAddr       string `env:"SCIOND_ADDR" default:"127.0.0.1:30255"`
-	CacheSize        int    `env:"CACHE_SIZE" default:"1000"`
-	GoogleMapsApiKey string `env:"GOOGLE_MAPS_API_KEY"`
+	Port              int    `env:"PORT" default:"27003"`
+	SciondAddr        string `env:"SCIOND_ADDR" default:"127.0.0.1:30255"`
+	CacheSize         int    `env:"CACHE_SIZE" default:"1000"`
+	GoogleMapsApiKey  string `env:"GOOGLE_MAPS_API_KEY" default:""`
+	EnableGeolocation bool   `env:"ENABLE_GEOLOCATION" default:"false"`
 }
 
 type server struct {
@@ -30,12 +31,14 @@ type server struct {
 func newServer(cfg config) server {
 	nipSources := make([]sources.NipSource, 0)
 
-	// more sources can be added here
 	nipSources = append(nipSources, sources.NewScionNipSource(sources.ScionNipSourceConfig{
-		SciondAddress:    cfg.SciondAddr,
-		GoogleMapsApiKey: cfg.GoogleMapsApiKey,
-		CacheSize:        cfg.CacheSize,
+		SciondAddress:     cfg.SciondAddr,
+		GoogleMapsApiKey:  cfg.GoogleMapsApiKey,
+		CacheSize:         cfg.CacheSize,
+		EnableGeolocation: cfg.EnableGeolocation,
 	}))
+
+	nipSources = append(nipSources, sources.NewLocalNipSource(sources.LocalNipSourceConfig{}))
 
 	return server{
 		config:  cfg,

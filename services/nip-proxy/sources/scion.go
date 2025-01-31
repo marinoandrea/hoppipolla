@@ -31,6 +31,8 @@ type ScionCacheValue struct {
 	metadata *Metadata
 }
 
+// Metadata source leveraging SCION beacon metadata and
+// optional Google reverse geolocation
 type ScionNipSource struct {
 	isInit             bool
 	config             ScionNipSourceConfig
