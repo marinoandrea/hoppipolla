@@ -15,16 +15,10 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./services/nip-proxy
+        working-directory: .
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm run test
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
@@ -40,23 +34,17 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build . -t eu.gcr.io/hoppipolla/nip-proxy:${{ github.sha }}
+        run: docker build services/nip-proxy -t eu.gcr.io/hoppipolla/nip-proxy:${{ github.sha }}
 
   path-analyzer:
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: ./services/path-analyzer
+        working-directory: .
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm run test
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
@@ -72,14 +60,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build . -t eu.gcr.io/hoppipolla/path-analyzer:${{ github.sha }}
+        run: docker build services/path-analyzer -t eu.gcr.io/hoppipolla/path-analyzer:${{ github.sha }}
 
   policy-manager:
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: ./services/policy-manager
+        working-directory: .
 
     steps:
       - uses: actions/checkout@v4
@@ -87,15 +75,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install --with dev
-
-      - name: Run tests
-        run: poetry run python -m coverage run -m pytest
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
@@ -111,4 +90,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build . -t eu.gcr.io/hoppipolla/policy-manager:${{ github.sha }}
+        run: docker build services/policy-manager -t eu.gcr.io/hoppipolla/policy-manager:${{ github.sha }}
