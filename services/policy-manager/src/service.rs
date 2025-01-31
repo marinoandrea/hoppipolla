@@ -16,9 +16,6 @@ use crate::reasoner::{self, ReasonerError};
 pub struct Service {
     config: crate::Config,
     db: PolicyDb,
-    meta_policy: Arc<RwLock<Option<MetaPolicy>>>,
-    policies: Arc<RwLock<HashMap<PolicyId, Policy>>>,
-    issuers: Arc<RwLock<HashMap<IssuerId, Issuer>>>,
     nip_proxy: Option<NipProxyClient<Channel>>,
 }
 
@@ -33,7 +30,7 @@ impl ClientHandle {
         if self.stale {
             if self.chan.is_none() {
                 self.chan = Some(
-                    PathAnalyzerClient::connect(self.addr.clone())
+                    PathAnalyzerClient::connect(format!("grpc://{}", self.addr.clone()))
                         .await
                         .map_err(|e| {
                             log::error!("PathAnalyzerClient::connect({}): {}", self.addr, e);
@@ -50,6 +47,11 @@ impl ClientHandle {
 
 lazy_static! {
     static ref CLIENTS: Mutex<Vec<ClientHandle>> = Mutex::new(Vec::default());
+    static ref META_POLICY: Arc<RwLock<Option<MetaPolicy>>> = Arc::new(RwLock::new(None));
+    static ref POLICIES: Arc<RwLock<HashMap<PolicyId, Policy>>> =
+        Arc::new(RwLock::new(HashMap::new()));
+    static ref ISSUERS: Arc<RwLock<HashMap<IssuerId, Issuer>>> =
+        Arc::new(RwLock::new(HashMap::new()));
 }
 
 /// Retries client refresh RPCs until they are not stale anymore
@@ -83,30 +85,28 @@ impl Service {
     pub async fn with_config(config: crate::Config) -> Self {
         let db = PolicyDb::new(&config.db_uri, config.db_max_conns).await;
 
-        let policies = Arc::new(RwLock::new(
-            db.load_policies()
-                .await
-                .into_iter()
-                .map(|p| (p.id(), p))
-                .collect::<HashMap<_, _>>(),
-        ));
+        let mut policies = POLICIES.write().await;
+        *policies = db
+            .load_policies()
+            .await
+            .into_iter()
+            .map(|p| (p.id(), p))
+            .collect::<HashMap<_, _>>();
 
-        let issuers = Arc::new(RwLock::new(
-            db.load_issuers()
-                .await
-                .into_iter()
-                .map(|i| (i.id(), i))
-                .collect::<HashMap<_, _>>(),
-        ));
+        let mut issuers = ISSUERS.write().await;
+        *issuers = db
+            .load_issuers()
+            .await
+            .into_iter()
+            .map(|i| (i.id(), i))
+            .collect::<HashMap<_, _>>();
 
-        let meta_policy = Arc::new(RwLock::new(db.load_meta_policy().await));
+        let mut meta_policy = META_POLICY.write().await;
+        *meta_policy = db.load_meta_policy().await;
 
         Self {
             config,
             db,
-            policies,
-            issuers,
-            meta_policy,
             nip_proxy: None, // needs to be initialized at startup
         }
     }
@@ -124,8 +124,6 @@ impl Service {
                     Status::unknown(e.to_string())
                 })?,
         );
-
-        self.meta_policy = Arc::new(RwLock::new(self.db.load_meta_policy().await));
 
         Ok(())
     }
@@ -153,7 +151,7 @@ impl PolicyManager for Service {
 
         let mut tx = self.db.tx().await;
 
-        let mut policies = self.policies.write().await;
+        let mut policies = POLICIES.write().await;
         policies.insert(p.id(), p.clone());
 
         self.db
@@ -185,7 +183,7 @@ impl PolicyManager for Service {
             .parse::<PolicyId>()
             .map_err(|e| Status::invalid_argument(e.to_string()))?;
 
-        if let Some(p) = self.policies.read().await.get(&id) {
+        if let Some(p) = POLICIES.read().await.get(&id) {
             res.policy = Some(p.into());
         } else {
             return Err(Status::not_found("no policy with specified id"));
@@ -206,7 +204,7 @@ impl PolicyManager for Service {
             .parse::<PolicyId>()
             .map_err(|e| Status::invalid_argument(e.to_string()))?;
 
-        let mut policies = self.policies.write().await;
+        let mut policies = POLICIES.write().await;
 
         let v = policies.get_mut(&id);
         if v.is_none() {
@@ -266,7 +264,7 @@ impl PolicyManager for Service {
             return Err(Status::not_found("no policy with specified id"));
         }
 
-        self.policies.write().await.remove(id);
+        POLICIES.write().await.remove(id);
 
         // NOTE: maybe we should not fail on client refresh
         self.refresh().await?;
@@ -283,7 +281,7 @@ impl PolicyManager for Service {
         _: tonic::Request<pb::ListPoliciesRequest>,
     ) -> std::result::Result<Response<pb::ListPoliciesResponse>, Status> {
         let mut res = pb::ListPoliciesResponse::default();
-        let policies = self.policies.read().await;
+        let policies = POLICIES.read().await;
         res.policies = policies.values().map(Into::into).collect();
         Ok(Response::new(res))
     }
@@ -295,9 +293,9 @@ impl PolicyManager for Service {
         let req = req.get_ref().clone();
         let mut res = pb::FindPathsResponse::default();
 
-        let policies = self.policies.read().await.values().cloned().collect();
-        let issuers = self.issuers.read().await.values().cloned().collect();
-        let meta_policy = self.meta_policy.read().await.clone();
+        let policies = POLICIES.read().await.values().cloned().collect();
+        let issuers = ISSUERS.read().await.values().cloned().collect();
+        let meta_policy = META_POLICY.read().await.clone();
 
         let nip_res = self
             .nip_proxy
@@ -407,14 +405,13 @@ impl PolicyManager for Service {
 
         // log::debug!("{:?}", pi);
 
-        let solution =
-            reasoner::solve(&pi, policies, issuers, meta_policy).map_err(|err| match err {
-                ReasonerError::AspError(e) => Status::internal(e.to_string()),
-                ReasonerError::ConflictResolutionError(e) => Status::aborted(e.to_string()),
-                ReasonerError::InvalidMetaInstance => {
-                    Status::aborted("invalid meta-policy instance".to_string())
-                }
-            })?;
+        let solution = reasoner::solve(&pi, policies, issuers, meta_policy, self.config.n_models)
+            .map_err(|err| match err {
+            ReasonerError::AspError(e) => Status::internal(e.to_string()),
+            ReasonerError::ConflictResolutionError => {
+                Status::aborted("failed to solve conflict".to_string())
+            }
+        })?;
 
         if let Some(paths) = solution {
             res.paths = paths
@@ -447,7 +444,7 @@ impl PolicyManager for Service {
 
         let mut tx = self.db.tx().await;
 
-        let mut issuers = self.issuers.write().await;
+        let mut issuers = ISSUERS.write().await;
         issuers.insert(issuer.id(), issuer.clone());
 
         self.db
@@ -488,10 +485,19 @@ impl PolicyManager for Service {
 
     async fn reset_policies(&self, _: Request<()>) -> Result<Response<()>, Status> {
         let mut tx = self.db.tx().await;
+
         self.db
             .reset_policies(&mut *tx)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
+        self.db
+            .reset_meta_policies(&mut *tx)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        POLICIES.write().await.clear();
+        *META_POLICY.write().await = None;
+
         Ok(Response::new(()))
     }
 
@@ -511,8 +517,9 @@ impl PolicyManager for Service {
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        let mut old = self.meta_policy.write().await;
-        *old = Some(mp);
+        let mut meta_policy = META_POLICY.write().await;
+        log::debug!("new meta-policy:\n{}", mp.source());
+        *meta_policy = Some(mp);
 
         Ok(Response::new(()))
     }

@@ -33,6 +33,9 @@ struct Config {
 
     #[envconfig(from = "NIP_PROXY_ADDR", default = "127.0.0.1:27003")]
     pub nip_proxy_addr: String,
+
+    #[envconfig(from = "N_MODELS", default = "10")]
+    pub n_models: u32,
 }
 
 #[tokio::main]

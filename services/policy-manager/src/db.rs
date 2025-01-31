@@ -97,6 +97,16 @@ impl PolicyDb {
         Ok(())
     }
 
+    pub async fn reset_meta_policies<'e, E>(&self, executor: E) -> Result<(), sqlx::Error>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query("DELETE FROM meta_policies;")
+            .execute(executor)
+            .await?;
+        Ok(())
+    }
+
     pub async fn update_policy<'e, E>(&self, executor: E, p: &Policy) -> Result<(), sqlx::Error>
     where
         E: sqlx::Executor<'e, Database = sqlx::Postgres>,
@@ -158,7 +168,7 @@ impl PolicyDb {
                 id          UUID PRIMARY KEY,
                 created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
                 updated_at  TIMESTAMP WITH TIME ZONE NOT NULL,
-                issuer_id   UUID NOT NULL,
+                issuer_id   UUID,
                 title       TEXT,
                 description TEXT,
                 source      TEXT NOT NULL,
@@ -180,7 +190,7 @@ impl PolicyDb {
                 updated_at  TIMESTAMP WITH TIME ZONE NOT NULL,
                 title       TEXT,
                 description TEXT,
-                source      TEXT NOT NULL,
+                source      TEXT NOT NULL
             );
         ",
         )

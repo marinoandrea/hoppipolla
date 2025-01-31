@@ -2,10 +2,9 @@ use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
     hash::Hash,
-    mem,
 };
 
-use clingo::{control, ClingoError, FactBase, Part, ShowType, SolveMode, Symbol};
+use clingo::{control, ClingoError, FactBase, Part, Symbol};
 
 use crate::entities::{Issuer, MetaPolicy, Policy, PolicyId, DEFAULT_ISSUER};
 use crate::policy_manager as pb;
@@ -16,9 +15,8 @@ const SYMBOL_LINK: &str = "link";
 const SYMBOL_CHOSEN: &str = "chosen";
 const SYMBOL_ISSUED: &str = "issued";
 const SYMBOL_POWER: &str = "power";
-const SYMBOL_OVERRIDES: &str = "overrides";
 const SYMBOL_CONFLICTING: &str = "conflicting";
-const SYMBOL_ACTIVE: &str = "active";
+const SYMBOL_DEACTIVATE: &str = "deactivate";
 
 const PROBLEM_ENCODING: &str = "
 { chosen(X, XIF, Y, YIF) : link(X, XIF, Y, YIF) } 1 :- link(X, _, _, _).
@@ -36,14 +34,160 @@ reachable(S) :- src(S).
 reachable(Y) :- reachable(X), chosen(X, _, Y, _).
 :- dst(D), not reachable(D).
 
+% filter out empty models
+:- #count { : chosen(_, _, _, _) } == 0.
+
 #show chosen/4.
 ";
+
+const META_PROBLEM_ENCODING: &str = "
+conflicting(P2, P1) :- conflicting(P1, P2).
+
+:- conflicting(P1, P2), 
+    not overrides(_, P2), 
+    not overrides(_, P1).
+
+deactivate(P) :- overrides(_, P).
+
+% filter out empty models
+:- #count { : deactivate(_) } == 0, #count { : conflicting(_, _) } > 0.
+
+#show deactivate/1.
+";
+
+pub fn solve(
+    pi: &ProblemInstance,
+    policies: Vec<Policy>,
+    issuers: Vec<Issuer>,
+    metapolicy: Option<MetaPolicy>,
+    n_models: u32,
+) -> Result<Option<HashSet<Vec<Link>>>, ReasonerError> {
+    let n_models_arg = format!("--models={}", n_models).to_string();
+
+    log::info!("solving with {}", n_models_arg);
+
+    let ctl_args = vec![n_models_arg];
+
+    let mut fb = FactBase::new();
+    pi.populate(&mut fb)
+        .expect("failed at populating the fact base, this is probably an issue with the string identifiers in the links");
+
+    if policies.is_empty() {
+        let mut sols = HashSet::new();
+
+        let mut ctl = control(ctl_args.clone()).expect("failed to create control handle");
+        ctl.add_facts(&fb).expect("failed to add facts");
+        ctl.add("base", &[], PROBLEM_ENCODING)
+            .expect("failed to add base problem encoding");
+
+        let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
+        ctl.ground(&parts).map_err(ReasonerError::AspError)?;
+
+        for model in ctl.all_models().map_err(ReasonerError::AspError)? {
+            let path = reconstruct_path(&pi.src, &pi.dst, model.symbols)
+                .expect("unable to reconstruct pact from model");
+            log::debug!("Path found: {:?}", path);
+            sols.insert(path);
+        }
+
+        return Ok(Some(sols));
+    }
+
+    // TODO: parallelize with rayon
+    // solve search problem for every policy
+    let mut results = HashMap::new();
+    for pol in policies.iter() {
+        let mut sols = HashSet::new();
+
+        let mut ctl = control(ctl_args.clone()).expect("failed to create control handle");
+        ctl.add_facts(&fb).expect("failed to add facts");
+        ctl.add("base", &[], PROBLEM_ENCODING)
+            .expect("failed to add base problem encoding");
+        ctl.add("base", &[], pol.source())
+            .map_err(ReasonerError::AspError)?;
+
+        let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
+        ctl.ground(&parts).map_err(ReasonerError::AspError)?;
+
+        for model in ctl.all_models().map_err(ReasonerError::AspError)? {
+            let path = reconstruct_path(&pi.src, &pi.dst, model.symbols)
+                .expect("unable to reconstruct pact from model");
+            log::debug!("Path found: {:?}", path);
+            sols.insert(path);
+        }
+
+        results.insert(pol.id(), sols);
+    }
+
+    let mpi = MetaProblemInstance {
+        policies: &policies,
+        issuers: &issuers,
+        metadata: &pi.meta, // TODO: maybe it should be separate
+        solutions: &results,
+    };
+
+    let mut meta_fb = FactBase::new();
+    mpi.populate(&mut meta_fb)
+        .map_err(ReasonerError::AspError)?;
+
+    let mut meta_ctl =
+        control(vec!["--models=1".to_string()]).expect("failed to create control handle");
+    meta_ctl.add_facts(&meta_fb).expect("failed to add facts");
+    meta_ctl
+        .add("base", &[], META_PROBLEM_ENCODING)
+        .map_err(ReasonerError::AspError)?;
+
+    if let Some(mp) = metapolicy {
+        meta_ctl
+            .add("base", &[], mp.source())
+            .map_err(ReasonerError::AspError)?;
+        log::debug!("running with meta-policy:\n{}", mp.source());
+    }
+
+    let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
+    meta_ctl.ground(&parts).map_err(ReasonerError::AspError)?;
+
+    let model = meta_ctl
+        .all_models()
+        .map_err(ReasonerError::AspError)?
+        .next()
+        .ok_or(ReasonerError::ConflictResolutionError)?;
+
+    for atom in model.symbols.iter() {
+        log::debug!("{}", atom.to_string());
+        let atom_args = atom.arguments().expect("failed to extract atom args");
+        if atom.name().expect("failed to extract atom name") == SYMBOL_DEACTIVATE
+            && atom.is_positive().expect("failed to extract atom sign")
+        {
+            results.remove(
+                atom_args
+                    .first()
+                    .expect("malformed active predicate")
+                    .string()
+                    .expect("failed to extract symbol string")
+                    .parse::<uuid::Uuid>()
+                    .expect("malformed policy id")
+                    .as_ref(),
+            );
+        }
+    }
+
+    match results.iter().next() {
+        None => Ok(None),
+        Some((_, sols)) => {
+            let mut out = sols.clone();
+            for (_, sols) in results.iter() {
+                out = out.intersection(sols).cloned().collect();
+            }
+            Ok(Some(out))
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum ReasonerError {
     AspError(ClingoError),
-    ConflictResolutionError(String),
-    InvalidMetaInstance,
+    ConflictResolutionError,
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
@@ -245,23 +389,47 @@ impl MetaProblemInstance<'_> {
                     fb.insert(&Symbol::create_function(
                         SYMBOL_ISSUED,
                         &[
-                            pol_a_symbol,
                             Symbol::create_string(&DEFAULT_ISSUER.id().to_string())?,
-                            Symbol::create_string(&pol_a.created_at().to_rfc3339())?,
+                            pol_a_symbol,
+                            Symbol::create_number(
+                                pol_a
+                                    .created_at()
+                                    .timestamp()
+                                    .try_into()
+                                    .expect("we do not support i64 timestamps"),
+                            ),
                         ],
                         true,
                     )?);
+                    log::debug!(
+                        "issued({}, {}, {})",
+                        &DEFAULT_ISSUER.id().to_string(),
+                        pol_a.id().to_string(),
+                        pol_a.created_at().timestamp()
+                    );
                 }
                 Some(issuer) => {
                     fb.insert(&Symbol::create_function(
                         SYMBOL_ISSUED,
                         &[
-                            pol_a_symbol,
                             Symbol::create_string(&issuer.id().to_string())?,
-                            Symbol::create_string(&pol_a.created_at().to_rfc3339())?,
+                            pol_a_symbol,
+                            Symbol::create_number(
+                                pol_a
+                                    .created_at()
+                                    .timestamp()
+                                    .try_into()
+                                    .expect("we do not support i64 timestamps"),
+                            ),
                         ],
                         true,
                     )?);
+                    log::debug!(
+                        "issued({}, {}, {})",
+                        issuer.id().to_string(),
+                        pol_a.id().to_string(),
+                        pol_a.created_at().timestamp()
+                    );
                 }
             };
 
@@ -285,6 +453,11 @@ impl MetaProblemInstance<'_> {
                         &[pol_a_symbol, pol_b_symbol],
                         true,
                     )?);
+                    log::debug!(
+                        "conflicting({}, {})",
+                        pol_a.id().to_string(),
+                        pol_b.id().to_string()
+                    );
                 }
             }
         }
@@ -294,202 +467,5 @@ impl MetaProblemInstance<'_> {
         }
 
         Ok(())
-    }
-}
-
-pub fn solve(
-    pi: &ProblemInstance,
-    policies: Vec<Policy>,
-    issuers: Vec<Issuer>,
-    metapolicy: Option<MetaPolicy>,
-) -> Result<Option<HashSet<Vec<Link>>>, ReasonerError> {
-    let ctl_args = vec!["--models=0".to_string()];
-
-    let mut fb = FactBase::new();
-    pi.populate(&mut fb)
-        .expect("failed at populating the fact base, this is probably an issue with the string identifiers in the links");
-
-    if policies.is_empty() {
-        let mut sols = HashSet::new();
-
-        let mut ctl = control(ctl_args.clone()).expect("failed to create control handle");
-        ctl.add_facts(&fb).expect("failed to add facts");
-        ctl.add("base", &[], PROBLEM_ENCODING)
-            .expect("failed to add base problem encoding");
-
-        let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
-        ctl.ground(&parts).map_err(ReasonerError::AspError)?;
-
-        for model in ctl.all_models().map_err(ReasonerError::AspError)? {
-            let path = reconstruct_path(&pi.src, &pi.dst, model.symbols)
-                .expect("unable to reconstruct pact from model");
-            log::debug!("Path found: {:?}", path);
-            sols.insert(path);
-        }
-
-        return Ok(Some(sols));
-    }
-
-    // TODO: parallelize with rayon
-    // solve search problem for every policy
-    let mut results = HashMap::new();
-    for pol in policies.iter() {
-        let mut sols = HashSet::new();
-
-        let mut ctl = control(ctl_args.clone()).expect("failed to create control handle");
-        ctl.add_facts(&fb).expect("failed to add facts");
-        ctl.add("base", &[], PROBLEM_ENCODING)
-            .expect("failed to add base problem encoding");
-        ctl.add("base", &[], pol.source())
-            .map_err(ReasonerError::AspError)?;
-
-        let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
-        ctl.ground(&parts).map_err(ReasonerError::AspError)?;
-
-        for model in ctl.all_models().map_err(ReasonerError::AspError)? {
-            let path = reconstruct_path(&pi.src, &pi.dst, model.symbols)
-                .expect("unable to reconstruct pact from model");
-            log::debug!("Path found: {:?}", path);
-            sols.insert(path);
-        }
-
-        results.insert(pol.id(), sols);
-    }
-
-    let mpi = MetaProblemInstance {
-        policies: &policies,
-        issuers: &issuers,
-        metadata: &pi.meta, // TODO: maybe it should be separate
-        solutions: &results,
-    };
-
-    let mut meta_fb = FactBase::new();
-    mpi.populate(&mut meta_fb)
-        .map_err(ReasonerError::AspError)?;
-
-    let mut meta_ctl = control(Vec::new()).expect("failed to create control handle");
-    meta_ctl.add_facts(&meta_fb).expect("failed to add facts");
-
-    if let Some(mp) = metapolicy {
-        meta_ctl
-            .add("base", &[], &mp.source())
-            .map_err(ReasonerError::AspError)?;
-    }
-
-    let parts = vec![Part::new("base", vec![]).expect("failed to create base parts")];
-    meta_ctl.ground(&parts).map_err(ReasonerError::AspError)?;
-
-    let mut handle = meta_ctl
-        .solve(SolveMode::ASYNC | SolveMode::YIELD, &[])
-        .map_err(ReasonerError::AspError)?;
-
-    handle.resume().map_err(ReasonerError::AspError)?;
-
-    let mut overridden_policies: HashSet<Symbol> = HashSet::with_capacity(policies.len());
-    let mut deactivated_policies: HashSet<Symbol> = HashSet::with_capacity(policies.len());
-    let mut unresolved_conflicts: Vec<&Symbol> =
-        Vec::with_capacity((policies.len() * policies.len()) / 2);
-
-    match handle.model() {
-        Err(e) => return Err(ReasonerError::AspError(e)),
-        Ok(None) => return Err(ReasonerError::InvalidMetaInstance),
-        Ok(Some(model)) => {
-            let atoms = model
-                .symbols(ShowType::ALL)
-                .expect("failed to retrieve shown symbols in meta-model");
-
-            for activation in atoms
-                .iter()
-                .filter(|s| s.name().expect("failed to extract symbol name") == SYMBOL_ACTIVE)
-            {
-                deactivated_policies.insert(
-                    activation
-                        .arguments()
-                        .expect("failed to extract active argument")
-                        .first()
-                        .expect("malformed active predicate")
-                        .to_owned(),
-                );
-            }
-
-            let mut conflicts: Vec<&Symbol> = atoms
-                .iter()
-                .filter(|s| s.name().expect("failed to extract symbol name") == SYMBOL_CONFLICTING)
-                .collect();
-
-            loop {
-                for conflict in conflicts.iter() {
-                    let conflicting_policies = conflict
-                        .arguments()
-                        .expect("failed to extract conflicting arguments");
-                    let pol_a = conflicting_policies
-                        .first()
-                        .expect("faulty definition of conflicting a")
-                        .to_owned();
-                    let pol_b = conflicting_policies
-                        .get(1)
-                        .expect("faulty definition of conflicting b")
-                        .to_owned();
-
-                    if overridden_policies.contains(&pol_a)
-                        || overridden_policies.contains(&pol_b)
-                        || deactivated_policies.contains(&pol_a)
-                        || deactivated_policies.contains(&pol_b)
-                    {
-                        continue;
-                    }
-
-                    let a_overrides_b =
-                        Symbol::create_function(SYMBOL_OVERRIDES, &[pol_a, pol_b], true)
-                            .map_err(ReasonerError::AspError)?;
-                    let b_overrides_a =
-                        Symbol::create_function(SYMBOL_OVERRIDES, &[pol_b, pol_a], true)
-                            .map_err(ReasonerError::AspError)?;
-
-                    if model
-                        .contains(a_overrides_b)
-                        .map_err(ReasonerError::AspError)?
-                    {
-                        overridden_policies.insert(pol_b);
-                    } else if model
-                        .contains(b_overrides_a)
-                        .map_err(ReasonerError::AspError)?
-                    {
-                        overridden_policies.insert(pol_a);
-                    } else {
-                        unresolved_conflicts.push(conflict);
-                    }
-                }
-
-                if conflicts.len() == unresolved_conflicts.len() {
-                    break;
-                }
-
-                mem::swap(&mut conflicts, &mut unresolved_conflicts);
-                unresolved_conflicts.clear();
-            }
-
-            if let Some(conflict) = unresolved_conflicts.pop() {
-                return Err(ReasonerError::ConflictResolutionError(conflict.to_string()));
-            }
-        }
-    }
-
-    let mut valid_results = results.iter().filter(|(pol, _)| {
-        let pol_symbol = &Symbol::create_string(&pol.to_string())
-            .map_err(ReasonerError::AspError)
-            .unwrap();
-        !overridden_policies.contains(pol_symbol) && !deactivated_policies.contains(pol_symbol)
-    });
-
-    match valid_results.next() {
-        None => Ok(None),
-        Some((_, sols)) => {
-            let mut out = sols.clone();
-            for (_, sols) in valid_results {
-                out = out.intersection(sols).cloned().collect();
-            }
-            Ok(Some(out))
-        }
     }
 }
