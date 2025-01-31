@@ -29,6 +29,7 @@ type config struct {
 	Port              int    `env:"PORT" default:"27001"`
 	SciondAddr        string `env:"SCIOND_ADDR" default:"127.0.0.1:30255"`
 	CacheSize         int    `env:"CACHE_SIZE" default:"1000"`
+	NPaths            int    `env:"N_PATHS" default:"10"`
 	PolicyManagerAddr string `env:"POLICY_MANAGER_ADDR" default:"127.0.0.1:27002"`
 }
 
@@ -113,7 +114,7 @@ func (s server) GetPaths(ctx context.Context, req *pb.GetPathsRequest) (*pb.GetP
 
 	minExpiry := int64(math.MaxInt64)
 	links := make([]*policypb.Link, 0)
-	for _, path := range candidates {
+	for _, path := range candidates[:s.config.NPaths] {
 		minExpiry = min(path.Metadata().Expiry.UnixMilli(), minExpiry)
 		idfs := path.Metadata().Interfaces
 		for i := range len(idfs) {
